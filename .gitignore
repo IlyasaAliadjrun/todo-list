@@ -1,0 +1,26 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# build
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+
+# prisma
+packages/db/prisma/*.db
+
+# test & coverage
+coverage/
+playwright-report/
+test-results/
+
+# logs & os
+*.log
+.DS_Store

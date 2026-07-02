@@ -1,0 +1,12 @@
+// Prisma schema — satu-satunya jalur ke database (lihat docs/architecture.md).
+// Fase 0: hanya datasource + generator. Model data ditambahkan mulai Fase 1
+// (User, Workspace, dst). Migration awal sengaja kosong tapi berhasil jalan.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

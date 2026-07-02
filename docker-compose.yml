@@ -1,0 +1,113 @@
+# docker-compose.yml — infrastruktur DEV (Postgres, Redis, MinIO).
+# Compose v2: jalankan dengan `docker compose up -d` (bukan docker-compose).
+#
+# Fase 0 hanya butuh service data ini. Service `api` & `web` ditambahkan
+# belakangan setelah kode & Dockerfile-nya ada (lihat blok komentar di bawah).
+
+name: notion-clone
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-notion}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-notion_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-notion}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-notion} -d ${POSTGRES_DB:-notion}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin_dev_password}
+    ports:
+      - "9000:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: buat bucket lalu keluar. Aman dijalankan berulang.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-minioadmin} ${S3_SECRET_KEY:-minioadmin_dev_password} &&
+      mc mb --ignore-existing local/${S3_BUCKET:-notion-uploads} &&
+      mc anonymous set download local/${S3_BUCKET:-notion-uploads} &&
+      echo 'Bucket siap: ${S3_BUCKET:-notion-uploads}'
+      "
+
+  # --- Aplikasi (Fase 0): API NestJS + web Vite ---
+  # Di dalam jaringan compose, service saling terhubung via nama host
+  # (postgres/redis/minio), jadi override host di environment.
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      POSTGRES_HOST: postgres
+      DATABASE_URL: postgresql://${POSTGRES_USER:-notion}:${POSTGRES_PASSWORD:-notion_dev_password}@postgres:5432/${POSTGRES_DB:-notion}?schema=public
+      REDIS_HOST: redis
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://minio:9000
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      minio: { condition: service_healthy }
+    ports:
+      - "${API_PORT:-3001}:3001"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      # `vite preview` proxy /health & /api ke container api.
+      VITE_API_PROXY: http://api:3001
+      WEB_PORT: 5173
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
