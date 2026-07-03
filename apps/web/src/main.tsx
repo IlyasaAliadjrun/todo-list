@@ -5,6 +5,8 @@ import ReactDOM from "react-dom/client";
 import { router } from "@/app/router";
 import { refreshSession } from "@/lib/http";
 import { useAuthStore } from "@/stores/auth.store";
+// Side-effect: menerapkan tema (light/dark) sedini mungkin untuk hindari flash.
+import "@/stores/theme.store";
 import "@/index.css";
 
 const queryClient = new QueryClient({

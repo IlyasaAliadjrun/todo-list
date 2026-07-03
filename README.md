@@ -1,9 +1,9 @@
-# Notion Clone
+# My Notepad
 
 Aplikasi pencatatan berbasis **block editor** ala Notion (fitur inti) untuk pemakaian
 pribadi & tim. Monorepo scalable, robust, dan siap deploy.
 
-> **Status:** Fase 0 (Fondasi & Infrastruktur) selesai. Roadmap lengkap di
+> **Status:** Fase 1 (Auth & Workspace) selesai. Roadmap lengkap di
 > [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Stack

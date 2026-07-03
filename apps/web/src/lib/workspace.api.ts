@@ -21,7 +21,11 @@ export function listWorkspaces(): Promise<WorkspaceSummary[]> {
 }
 
 export function createWorkspace(input: CreateWorkspaceInput): Promise<WorkspaceSummary> {
-  return apiFetch("/workspaces", { method: "POST", body: JSON.stringify(input) }, WorkspaceSummarySchema);
+  return apiFetch(
+    "/workspaces",
+    { method: "POST", body: JSON.stringify(input) },
+    WorkspaceSummarySchema,
+  );
 }
 
 export function listMembers(workspaceId: string): Promise<WorkspaceMember[]> {
@@ -37,7 +41,11 @@ export function inviteMember(workspaceId: string, input: InviteMemberInput): Pro
 }
 
 export function acceptInvitation(input: AcceptInvitationInput): Promise<WorkspaceSummary> {
-  return apiFetch("/invitations/accept", { method: "POST", body: JSON.stringify(input) }, WorkspaceSummarySchema);
+  return apiFetch(
+    "/invitations/accept",
+    { method: "POST", body: JSON.stringify(input) },
+    WorkspaceSummarySchema,
+  );
 }
 
 export function updateMemberRole(

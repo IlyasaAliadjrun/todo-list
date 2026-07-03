@@ -10,19 +10,27 @@ import { apiFetch } from "@/lib/http";
 import { useAuthStore } from "@/stores/auth.store";
 
 export async function register(input: RegisterInput): Promise<AuthResponse> {
-  const res = await apiFetch("/auth/register", {
-    method: "POST",
-    body: JSON.stringify(input),
-  }, AuthResponseSchema);
+  const res = await apiFetch(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+    AuthResponseSchema,
+  );
   useAuthStore.getState().setSession(res.accessToken, res.user);
   return res;
 }
 
 export async function login(input: LoginInput): Promise<AuthResponse> {
-  const res = await apiFetch("/auth/login", {
-    method: "POST",
-    body: JSON.stringify(input),
-  }, AuthResponseSchema);
+  const res = await apiFetch(
+    "/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+    AuthResponseSchema,
+  );
   useAuthStore.getState().setSession(res.accessToken, res.user);
   return res;
 }

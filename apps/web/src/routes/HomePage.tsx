@@ -91,7 +91,7 @@ export function HomePage() {
       {canManage && (
         <Section title="Undang anggota">
           <form
-            className="flex flex-wrap items-end gap-3"
+            className="flex flex-col gap-3 sm:flex-row sm:items-end"
             onSubmit={(e) => {
               e.preventDefault();
               setInviteError(null);
@@ -99,29 +99,34 @@ export function HomePage() {
               inviteMut.mutate();
             }}
           >
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="invite-email">Email</Label>
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="invite-email" className="block">
+                Email
+              </Label>
               <Input
                 id="invite-email"
                 type="email"
                 required
+                placeholder="nama@contoh.com"
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="invite-role">Role</Label>
+            <div className="space-y-1.5 sm:w-36">
+              <Label htmlFor="invite-role" className="block">
+                Role
+              </Label>
               <select
                 id="invite-role"
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as AssignableRole)}
-                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="MEMBER">MEMBER</option>
                 <option value="ADMIN">ADMIN</option>
               </select>
             </div>
-            <Button type="submit" disabled={inviteMut.isPending}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={inviteMut.isPending}>
               Undang
             </Button>
           </form>
@@ -142,7 +147,7 @@ export function HomePage() {
 
       <Section title="Buat workspace tim">
         <form
-          className="flex items-end gap-3"
+          className="flex flex-col gap-3 sm:flex-row sm:items-end"
           onSubmit={(e) => {
             e.preventDefault();
             createMut.mutate();
@@ -150,9 +155,14 @@ export function HomePage() {
         >
           <div className="flex-1 space-y-2">
             <Label htmlFor="ws-name">Nama workspace</Label>
-            <Input id="ws-name" required value={wsName} onChange={(e) => setWsName(e.target.value)} />
+            <Input
+              id="ws-name"
+              required
+              value={wsName}
+              onChange={(e) => setWsName(e.target.value)}
+            />
           </div>
-          <Button type="submit" disabled={createMut.isPending}>
+          <Button type="submit" className="w-full sm:w-auto" disabled={createMut.isPending}>
             Buat
           </Button>
         </form>
@@ -160,7 +170,7 @@ export function HomePage() {
 
       <Section title="Terima undangan">
         <form
-          className="flex items-end gap-3"
+          className="flex flex-col gap-3 sm:flex-row sm:items-end"
           onSubmit={(e) => {
             e.preventDefault();
             setAcceptError(null);
@@ -170,9 +180,19 @@ export function HomePage() {
         >
           <div className="flex-1 space-y-2">
             <Label htmlFor="accept-token">Token undangan</Label>
-            <Input id="accept-token" required value={token} onChange={(e) => setToken(e.target.value)} />
+            <Input
+              id="accept-token"
+              required
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+            />
           </div>
-          <Button type="submit" variant="outline" disabled={acceptMut.isPending}>
+          <Button
+            type="submit"
+            variant="outline"
+            className="w-full sm:w-auto"
+            disabled={acceptMut.isPending}
+          >
             Terima
           </Button>
         </form>

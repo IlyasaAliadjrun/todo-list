@@ -24,7 +24,7 @@ export function WorkspaceSwitcher() {
       value={selectedId ?? ""}
       onChange={(e) => select(e.target.value)}
       className={cn(
-        "h-9 rounded-md border border-input bg-background px-3 text-sm",
+        "h-9 max-w-[45vw] truncate rounded-md border border-input bg-background px-3 text-sm sm:max-w-xs",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
