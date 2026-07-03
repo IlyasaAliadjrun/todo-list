@@ -3,12 +3,13 @@ packages:
   - "packages/*"
 
 # Izinkan build script dependency yang memang butuh (Prisma mengunduh query
-# engine; esbuild memasang binary; Nest telemetry). Diblokir default oleh pnpm 11.
+# engine; esbuild memasang binary; argon2 memasang prebuilt native; Nest telemetry).
 # `onlyBuiltDependencies` dibaca pnpm standar (mis. CI GitHub Actions).
 onlyBuiltDependencies:
   - "@nestjs/core"
   - "@prisma/client"
   - "@prisma/engines"
+  - argon2
   - esbuild
   - prisma
 # `allowBuilds` dipakai oleh lapisan supply-chain di lingkungan dev ini.
@@ -16,5 +17,6 @@ allowBuilds:
   '@nestjs/core': true
   '@prisma/client': true
   '@prisma/engines': true
+  argon2: true
   esbuild: true
   prisma: true

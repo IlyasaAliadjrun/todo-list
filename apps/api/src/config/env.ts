@@ -15,6 +15,11 @@ const EnvSchema = z.object({
   REDIS_HOST: z.string().default("localhost"),
   REDIS_PORT: z.coerce.number().int().positive().default(6379),
 
+  // Auth: access token JWT + refresh token opaque (lihat ADR 0003).
+  JWT_ACCESS_SECRET: z.string().min(16, "JWT_ACCESS_SECRET terlalu pendek"),
+  JWT_ACCESS_TTL: z.coerce.number().int().positive().default(900), // detik
+  JWT_REFRESH_TTL: z.coerce.number().int().positive().default(1_209_600), // detik
+
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 });
 

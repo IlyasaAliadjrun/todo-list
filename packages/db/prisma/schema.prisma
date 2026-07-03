@@ -1,6 +1,5 @@
 // Prisma schema — satu-satunya jalur ke database (lihat docs/architecture.md).
-// Fase 0: hanya datasource + generator. Model data ditambahkan mulai Fase 1
-// (User, Workspace, dst). Migration awal sengaja kosong tapi berhasil jalan.
+// Fase 1: Auth & Workspace.
 
 generator client {
   provider = "prisma-client-js"
@@ -9,4 +8,90 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum WorkspaceType {
+  PERSONAL
+  TEAM
+}
+
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions        Session[]
+  memberships     WorkspaceMember[]
+  sentInvitations WorkspaceInvitation[] @relation("InvitedBy")
+}
+
+/// Refresh-token session. Token disimpan HANYA sebagai hash; rotasi menandai
+/// revokedAt dan menautkan replacedById ke sesi penggantinya.
+model Session {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  userAgent    String?
+  ip           String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Workspace {
+  id        String        @id @default(cuid())
+  name      String
+  slug      String        @unique
+  type      WorkspaceType @default(TEAM)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  members     WorkspaceMember[]
+  invitations WorkspaceInvitation[]
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        WorkspaceRole @default(MEMBER)
+  createdAt   DateTime      @default(now())
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+/// Undangan anggota. Fase 1 belum kirim email sungguhan — token undangan
+/// dikembalikan lewat API dan bisa di-accept. Token disimpan sebagai hash.
+model WorkspaceInvitation {
+  id          String        @id @default(cuid())
+  workspaceId String
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  email       String
+  role        WorkspaceRole @default(MEMBER)
+  tokenHash   String        @unique
+  expiresAt   DateTime
+  invitedById String
+  invitedBy   User          @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+  acceptedAt  DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@index([workspaceId])
+  @@index([email])
 }

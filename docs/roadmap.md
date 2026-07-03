@@ -20,6 +20,13 @@ Kerjakan satu fase per sesi. Detail prompt tiap fase ada di dokumen
 Catat di sini fitur yang muncul tapi ditunda: relation/rollup database, formula,
 kalender/timeline view, komentar lanjutan, notifikasi, import/export, mobile, dsb.
 
+Dari Fase 1 (Auth & Workspace):
+- Pengiriman email undangan sungguhan (kini token dikembalikan via API).
+- Reset/lupa password & verifikasi email.
+- OAuth/social login, 2FA.
+- Harness integration test Testcontainers (butuh SWC untuk metadata dekorator Nest di
+  vitest + Postgres service di CI) → dikerjakan di Fase 8 saat CI diperluas.
+
 ## Definition of Done (berlaku semua fase)
 
 - Kriteria selesai fase terpenuhi.

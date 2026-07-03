@@ -14,3 +14,38 @@ export {
   HealthResponseSchema,
 } from "./health/health";
 export type { DependencyStatus, HealthStatus, HealthResponse } from "./health/health";
+
+export {
+  emailSchema,
+  passwordSchema,
+  RegisterInputSchema,
+  LoginInputSchema,
+  AuthUserSchema,
+  AuthResponseSchema,
+} from "./auth/auth";
+export type { RegisterInput, LoginInput, AuthUser, AuthResponse } from "./auth/auth";
+
+export {
+  WorkspaceRoleSchema,
+  WorkspaceTypeSchema,
+  AssignableRoleSchema,
+  CreateWorkspaceInputSchema,
+  WorkspaceSummarySchema,
+  WorkspaceMemberSchema,
+  InviteMemberInputSchema,
+  UpdateMemberRoleInputSchema,
+  InvitationSchema,
+  AcceptInvitationInputSchema,
+} from "./workspace/workspace";
+export type {
+  WorkspaceRole,
+  WorkspaceType,
+  AssignableRole,
+  CreateWorkspaceInput,
+  WorkspaceSummary,
+  WorkspaceMember,
+  InviteMemberInput,
+  UpdateMemberRoleInput,
+  Invitation,
+  AcceptInvitationInput,
+} from "./workspace/workspace";

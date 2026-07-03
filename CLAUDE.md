@@ -83,10 +83,14 @@ docker compose up -d      # nyalakan postgres, redis, minio
 
 ## Status saat ini
 
-- **Fase 0 (Fondasi & Infrastruktur) — SELESAI.** Monorepo pnpm+Turborepo hidup
-  (`apps/web`, `apps/api`, `packages/shared`, `packages/db`), `GET /health` cek
-  DB+Redis, web menampilkan status, lint+typecheck+test lolos, CI + Docker siap.
-- Fase berikutnya: **Fase 1 — Auth & Workspace**.
+- **Fase 0 (Fondasi & Infrastruktur) — SELESAI.** Monorepo pnpm+Turborepo hidup,
+  `GET /health` cek DB+Redis, CI + Docker siap.
+- **Fase 1 (Auth & Workspace) — SELESAI.** Register/login/logout/refresh (argon2 +
+  JWT access + refresh token opaque ter-hash & rotasi via cookie httpOnly, lihat
+  ADR 0003), RBAC workspace (OWNER/ADMIN/MEMBER), workspace personal otomatis, buat
+  workspace tim, undang/terima/kelola anggota, rate-limit login (Redis). Frontend:
+  TanStack Router + guard, halaman auth, workspace switcher, panel anggota.
+- Fase berikutnya: **Fase 2 — Halaman & Hierarki (Sidebar Tree)**.
 - Lihat `docs/roadmap.md` untuk daftar fase & kriteria selesai.
 
 ## Slash command tersedia (lihat .claude/commands/)

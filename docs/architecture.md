@@ -44,6 +44,9 @@ berubah.
 
 ## Model otorisasi
 
+- Autentikasi: access token JWT pendek (header Bearer) + refresh token opaque
+  ter-hash di tabel `Session` (cookie httpOnly, rotasi + deteksi reuse). Detail di
+  `docs/adr/0003-strategi-auth-sesi.md`.
 - Keanggotaan workspace (OWNER/ADMIN/MEMBER) menentukan akses dasar.
 - Permission per halaman (VIEW/COMMENT/EDIT) mewarisi ke sub-page kecuali di-override.
 - Pengecekan otorisasi **wajib** di setiap endpoint REST DAN saat handshake koneksi

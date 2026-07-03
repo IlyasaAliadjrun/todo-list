@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import cookieParser from "cookie-parser";
 import { AppModule } from "./app.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import { loadEnv } from "./config/env";
@@ -12,6 +13,7 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
 
   app.enableCors({ origin: env.WEB_ORIGIN, credentials: true });
+  app.use(cookieParser());
   // Validasi input pakai Zod (ZodValidationPipe per-endpoint), bukan class-validator.
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableShutdownHooks();
