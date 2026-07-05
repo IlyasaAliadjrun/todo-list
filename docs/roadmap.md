@@ -27,6 +27,12 @@ Dari Fase 1 (Auth & Workspace):
 - Harness integration test Testcontainers (butuh SWC untuk metadata dekorator Nest di
   vitest + Postgres service di CI) → dikerjakan di Fase 8 saat CI diperluas.
 
+Dari Fase 2 (Halaman & Hierarki):
+- Upload cover image halaman (kolom coverUrl sudah ada; upload di Fase 3).
+- Duplicate page & template halaman.
+- Pagination/lazy-load tree untuk sidebar sangat besar (Fase 8).
+- Multi-select drag & auto-purge trash terjadwal (Fase 7).
+
 ## Definition of Done (berlaku semua fase)
 
 - Kriteria selesai fase terpenuhi.

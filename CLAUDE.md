@@ -90,7 +90,11 @@ docker compose up -d      # nyalakan postgres, redis, minio
   ADR 0003), RBAC workspace (OWNER/ADMIN/MEMBER), workspace personal otomatis, buat
   workspace tim, undang/terima/kelola anggota, rate-limit login (Redis). Frontend:
   TanStack Router + guard, halaman auth, workspace switcher, panel anggota.
-- Fase berikutnya: **Fase 2 — Halaman & Hierarki (Sidebar Tree)**.
+- **Fase 2 (Halaman & Hierarki) — SELESAI.** CRUD page bersarang, urutan sibling
+  fractional index, move (re-parent + reorder) dengan cegah cycle, archive/restore
+  + trash + hapus permanen cascade (lihat ADR 0004). Frontend: sidebar tree (@dnd-kit)
+  drag reorder/re-parent, rename inline, set ikon emoji, PageDetail, halaman Trash.
+- Fase berikutnya: **Fase 3 — Block Editor Inti (BlockNote)**.
 - Lihat `docs/roadmap.md` untuk daftar fase & kriteria selesai.
 
 ## Slash command tersedia (lihat .claude/commands/)

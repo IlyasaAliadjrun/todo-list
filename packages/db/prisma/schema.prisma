@@ -1,5 +1,5 @@
 // Prisma schema — satu-satunya jalur ke database (lihat docs/architecture.md).
-// Fase 1: Auth & Workspace.
+// Fase 1: Auth & Workspace. Fase 2: Page & hierarki (sidebar tree).
 
 generator client {
   provider = "prisma-client-js"
@@ -32,6 +32,7 @@ model User {
   sessions        Session[]
   memberships     WorkspaceMember[]
   sentInvitations WorkspaceInvitation[] @relation("InvitedBy")
+  createdPages    Page[]               @relation("PageAuthor")
 }
 
 /// Refresh-token session. Token disimpan HANYA sebagai hash; rotasi menandai
@@ -62,6 +63,7 @@ model Workspace {
 
   members     WorkspaceMember[]
   invitations WorkspaceInvitation[]
+  pages       Page[]
 }
 
 model WorkspaceMember {
@@ -94,4 +96,29 @@ model WorkspaceInvitation {
 
   @@index([workspaceId])
   @@index([email])
+}
+
+/// Halaman bersarang (nested pages). Urutan antar-saudara disimpan sebagai
+/// fractional index (string) agar reorder/re-parent cukup update 1 baris.
+/// Trash = isArchived true; hapus permanen meng-cascade ke turunan.
+model Page {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      Page?     @relation("PageTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Page[]    @relation("PageTree")
+  title       String    @default("Untitled")
+  icon        String?
+  coverUrl    String?
+  order       String
+  createdById String
+  createdBy   User      @relation("PageAuthor", fields: [createdById], references: [id])
+  isArchived  Boolean   @default(false)
+  archivedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId, parentId, order])
+  @@index([workspaceId, isArchived])
 }

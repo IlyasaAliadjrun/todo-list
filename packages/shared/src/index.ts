@@ -8,11 +8,7 @@
 export { ApiErrorSchema, ErrorCode, apiError } from "./http/error";
 export type { ApiError } from "./http/error";
 
-export {
-  DependencyStatusSchema,
-  HealthStatusSchema,
-  HealthResponseSchema,
-} from "./health/health";
+export { DependencyStatusSchema, HealthStatusSchema, HealthResponseSchema } from "./health/health";
 export type { DependencyStatus, HealthStatus, HealthResponse } from "./health/health";
 
 export {
@@ -49,3 +45,18 @@ export type {
   Invitation,
   AcceptInvitationInput,
 } from "./workspace/workspace";
+
+export {
+  PageSchema,
+  PageTreeNodeSchema,
+  CreatePageInputSchema,
+  UpdatePageInputSchema,
+  MovePageInputSchema,
+} from "./page/page";
+export type {
+  Page,
+  PageTreeNode,
+  CreatePageInput,
+  UpdatePageInput,
+  MovePageInput,
+} from "./page/page";

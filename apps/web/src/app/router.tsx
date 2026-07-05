@@ -8,7 +8,9 @@ import {
 import { AppLayout } from "@/routes/AppLayout";
 import { HomePage } from "@/routes/HomePage";
 import { LoginPage } from "@/routes/LoginPage";
+import { PageDetail } from "@/routes/PageDetail";
 import { RegisterPage } from "@/routes/RegisterPage";
+import { TrashPage } from "@/routes/TrashPage";
 import { useAuthStore } from "@/stores/auth.store";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
@@ -47,10 +49,22 @@ const indexRoute = createRoute({
   component: HomePage,
 });
 
+const pageRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/p/$pageId",
+  component: PageDetail,
+});
+
+const trashRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/trash",
+  component: TrashPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
-  appLayoutRoute.addChildren([indexRoute]),
+  appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
