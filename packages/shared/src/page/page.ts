@@ -15,6 +15,22 @@ export const PageSchema = z.object({
 });
 export type Page = z.infer<typeof PageSchema>;
 
+/** Konten dokumen BlockNote (array block). jsonb longgar — divalidasi oleh editor. */
+export const PageContentSchema = z.array(z.unknown());
+export type PageContent = z.infer<typeof PageContentSchema>;
+
+/** Detail halaman = Page + konten (dipakai saat membuka halaman). */
+export const PageDetailSchema = PageSchema.extend({
+  content: PageContentSchema.nullable(),
+});
+export type PageDetail = z.infer<typeof PageDetailSchema>;
+
+/** Body autosave konten. Last-write-wins (real-time via Yjs di Fase 5). */
+export const UpdatePageContentInputSchema = z.object({
+  content: PageContentSchema,
+});
+export type UpdatePageContentInput = z.infer<typeof UpdatePageContentInputSchema>;
+
 /** Node tree bersarang untuk sidebar (rekursif). */
 export type PageTreeNode = Page & { children: PageTreeNode[] };
 export const PageTreeNodeSchema: z.ZodType<PageTreeNode> = z.lazy(() =>

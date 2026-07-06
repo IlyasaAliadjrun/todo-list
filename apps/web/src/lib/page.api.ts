@@ -1,9 +1,12 @@
 import {
+  PageDetailSchema,
   PageSchema,
   PageTreeNodeSchema,
   type CreatePageInput,
   type MovePageInput,
   type Page,
+  type PageContent,
+  type PageDetail,
   type PageTreeNode,
   type UpdatePageInput,
 } from "@notion/shared";
@@ -21,8 +24,16 @@ export function getTrash(workspaceId: string): Promise<Page[]> {
   return apiFetch(`/workspaces/${workspaceId}/trash`, {}, PageListSchema);
 }
 
-export function getPage(id: string): Promise<Page> {
-  return apiFetch(`/pages/${id}`, {}, PageSchema);
+export function getPage(id: string): Promise<PageDetail> {
+  return apiFetch(`/pages/${id}`, {}, PageDetailSchema);
+}
+
+export function updatePageContent(id: string, content: PageContent): Promise<PageDetail> {
+  return apiFetch(
+    `/pages/${id}/content`,
+    { method: "PUT", body: JSON.stringify({ content }) },
+    PageDetailSchema,
+  );
 }
 
 export function createPage(workspaceId: string, input: CreatePageInput = {}): Promise<Page> {

@@ -94,7 +94,11 @@ docker compose up -d      # nyalakan postgres, redis, minio
   fractional index, move (re-parent + reorder) dengan cegah cycle, archive/restore
   + trash + hapus permanen cascade (lihat ADR 0004). Frontend: sidebar tree (@dnd-kit)
   drag reorder/re-parent, rename inline, set ikon emoji, PageDetail, halaman Trash.
-- Fase berikutnya: **Fase 3 — Block Editor Inti (BlockNote)**.
+- **Fase 3 (Block Editor BlockNote) — SELESAI.** Konten disimpan sebagai JSON block
+  di `Page.content` (jsonb), autosave debounce 500ms last-write-wins, load saat buka
+  halaman, upload gambar via presigned PUT ke MinIO/S3 (lihat ADR 0005). Frontend:
+  editor BlockNote di PageDetail, indikator simpan, tema light/dark tersinkron.
+- Fase berikutnya: **Fase 4 — Database Sederhana (Table View)**.
 - Lihat `docs/roadmap.md` untuk daftar fase & kriteria selesai.
 
 ## Slash command tersedia (lihat .claude/commands/)

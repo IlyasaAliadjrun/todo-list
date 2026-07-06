@@ -20,6 +20,21 @@ const EnvSchema = z.object({
   JWT_ACCESS_TTL: z.coerce.number().int().positive().default(900), // detik
   JWT_REFRESH_TTL: z.coerce.number().int().positive().default(1_209_600), // detik
 
+  // Object storage S3-compatible (MinIO lokal). Lihat ADR 0005.
+  S3_ENDPOINT: z.string().url().default("http://localhost:9000"),
+  S3_REGION: z.string().default("us-east-1"),
+  S3_BUCKET: z.string().default("notion-uploads"),
+  // Default = kredensial dev MinIO (docker-compose). WAJIB di-override di produksi.
+  S3_ACCESS_KEY: z.string().min(1).default("minioadmin"),
+  S3_SECRET_KEY: z.string().min(1).default("minioadmin"),
+  S3_FORCE_PATH_STYLE: z
+    .string()
+    .default("true")
+    .transform((v) => v !== "false"),
+  // Endpoint yang dipakai untuk URL yang diakses BROWSER (presigned & publicUrl).
+  // Di dev sama dengan S3_ENDPOINT; di container internal beda dengan yang publik.
+  S3_PUBLIC_ENDPOINT: z.string().url().optional(),
+
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
 });
 

@@ -111,6 +111,7 @@ model Page {
   title       String    @default("Untitled")
   icon        String?
   coverUrl    String?
+  content     Json?
   order       String
   createdById String
   createdBy   User      @relation("PageAuthor", fields: [createdById], references: [id])

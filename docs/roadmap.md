@@ -33,6 +33,12 @@ Dari Fase 2 (Halaman & Hierarki):
 - Pagination/lazy-load tree untuk sidebar sangat besar (Fase 8).
 - Multi-select drag & auto-purge trash terjadwal (Fase 7).
 
+Dari Fase 3 (Block Editor):
+- Kolaborasi real-time / concurrent edit (Yjs + Hocuspocus) → Fase 5; kini
+  autosave last-write-wins.
+- Hapus objek storage saat page dihapus permanen (kini objek yatim dibiarkan).
+- Kuota/limit upload per workspace, embed file non-gambar, cover image.
+
 ## Definition of Done (berlaku semua fase)
 
 - Kriteria selesai fase terpenuhi.

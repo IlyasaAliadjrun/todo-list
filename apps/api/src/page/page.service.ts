@@ -3,10 +3,12 @@ import type {
   CreatePageInput,
   MovePageInput,
   Page as PageDto,
+  PageContent,
+  PageDetail,
   PageTreeNode,
   UpdatePageInput,
 } from "@notion/shared";
-import type { Page as PageRow } from "@notion/db";
+import type { Prisma, Page as PageRow } from "@notion/db";
 import { generateKeyBetween } from "fractional-indexing";
 import { PrismaService } from "../prisma/prisma.service";
 import { buildTree, collectSubtreeIds, wouldCreateCycle } from "./page.util";
@@ -28,6 +30,10 @@ export class PageService {
       createdAt: page.createdAt.toISOString(),
       updatedAt: page.updatedAt.toISOString(),
     };
+  }
+
+  private toDetailDto(page: PageRow): PageDetail {
+    return { ...this.toDto(page), content: (page.content as unknown as PageContent) ?? null };
   }
 
   /** Pastikan user anggota workspace; kalau bukan, sembunyikan keberadaannya (404). */
@@ -55,10 +61,20 @@ export class PageService {
     return buildTree(pages.map((p) => this.toDto(p)));
   }
 
-  async getPage(id: string, userId: string): Promise<PageDto> {
+  async getPage(id: string, userId: string): Promise<PageDetail> {
     const page = await this.getOwnedPage(id, userId);
     if (page.isArchived) throw new NotFoundException("Halaman tidak ditemukan");
-    return this.toDto(page);
+    return this.toDetailDto(page);
+  }
+
+  /** Simpan konten dokumen (autosave). Last-write-wins (lihat ADR 0005). */
+  async updateContent(id: string, userId: string, content: PageContent): Promise<PageDetail> {
+    await this.getOwnedPage(id, userId);
+    const page = await this.prisma.page.update({
+      where: { id },
+      data: { content: content as unknown as Prisma.InputJsonValue },
+    });
+    return this.toDetailDto(page);
   }
 
   async create(workspaceId: string, userId: string, input: CreatePageInput): Promise<PageDto> {

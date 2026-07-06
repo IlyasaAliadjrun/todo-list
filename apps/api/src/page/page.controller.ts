@@ -8,16 +8,20 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   UseGuards,
 } from "@nestjs/common";
 import {
   CreatePageInputSchema,
   MovePageInputSchema,
+  UpdatePageContentInputSchema,
   UpdatePageInputSchema,
   type CreatePageInput,
   type MovePageInput,
   type Page,
+  type PageDetail,
   type PageTreeNode,
+  type UpdatePageContentInput,
   type UpdatePageInput,
 } from "@notion/shared";
 import { AuthenticatedUser } from "../auth/auth.constants";
@@ -57,8 +61,17 @@ export class PageController {
   }
 
   @Get("pages/:id")
-  get(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser): Promise<Page> {
+  get(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser): Promise<PageDetail> {
     return this.pages.getPage(id, user.id);
+  }
+
+  @Put("pages/:id/content")
+  updateContent(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(UpdatePageContentInputSchema)) dto: UpdatePageContentInput,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<PageDetail> {
+    return this.pages.updateContent(id, user.id, dto.content);
   }
 
   @Patch("pages/:id")

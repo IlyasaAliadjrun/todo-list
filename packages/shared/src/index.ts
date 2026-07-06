@@ -52,6 +52,9 @@ export {
   CreatePageInputSchema,
   UpdatePageInputSchema,
   MovePageInputSchema,
+  PageContentSchema,
+  PageDetailSchema,
+  UpdatePageContentInputSchema,
 } from "./page/page";
 export type {
   Page,
@@ -59,4 +62,15 @@ export type {
   CreatePageInput,
   UpdatePageInput,
   MovePageInput,
+  PageContent,
+  PageDetail,
+  UpdatePageContentInput,
 } from "./page/page";
+
+export {
+  MAX_UPLOAD_BYTES,
+  ALLOWED_UPLOAD_PREFIX,
+  PresignUploadInputSchema,
+  PresignUploadResponseSchema,
+} from "./storage/upload";
+export type { PresignUploadInput, PresignUploadResponse } from "./storage/upload";

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import type { UpdatePageInput } from "@notion/shared";
 import { useEffect, useState } from "react";
+import { PageEditor } from "@/components/page/PageEditor";
 import { getPage, updatePage } from "@/lib/page.api";
 
 export function PageDetail() {
@@ -65,10 +66,7 @@ export function PageDetail() {
         className="w-full bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground"
       />
 
-      <div className="rounded-lg border border-dashed p-10 text-center text-sm text-muted-foreground">
-        Editor block (BlockNote) hadir di <span className="font-medium">Fase 3</span>. Untuk kini,
-        halaman menyimpan judul, ikon, dan hierarki.
-      </div>
+      <PageEditor key={page.id} pageId={page.id} initialContent={page.content} />
     </div>
   );
 }
