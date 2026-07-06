@@ -98,7 +98,12 @@ docker compose up -d      # nyalakan postgres, redis, minio
   di `Page.content` (jsonb), autosave debounce 500ms last-write-wins, load saat buka
   halaman, upload gambar via presigned PUT ke MinIO/S3 (lihat ADR 0005). Frontend:
   editor BlockNote di PageDetail, indikator simpan, tema light/dark tersinkron.
-- Fase berikutnya: **Fase 4 — Database Sederhana (Table View)**.
+- **Fase 4 (Database Sederhana) — SELESAI.** Model Database/Property/Row/CellValue,
+  tipe TEXT/NUMBER/SELECT/MULTI_SELECT/CHECKBOX/DATE/URL, validasi nilai per tipe
+  (`normalizeCellValue`), ganti tipe best-effort (lihat ADR 0006). Frontend: BlockNote
+  custom block `/database` + TableView (CRUD kolom/baris, edit sel, opsi select,
+  reorder kolom, sort & filter client-side). Juga fix proxy dev (/pages,/databases,dst).
+- Fase berikutnya: **Fase 5 — Kolaborasi Real-time (Yjs + Hocuspocus)**.
 - Lihat `docs/roadmap.md` untuk daftar fase & kriteria selesai.
 
 ## Slash command tersedia (lihat .claude/commands/)

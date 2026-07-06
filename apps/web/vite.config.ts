@@ -7,7 +7,18 @@ const WEB_PORT = Number(process.env.WEB_PORT ?? 5173);
 
 // Semua prefix rute REST milik API di-proxy ke NestJS (same-origin → cookie mulus).
 const apiProxy = Object.fromEntries(
-  ["/health", "/api", "/auth", "/workspaces", "/invitations"].map((p) => [p, API_TARGET]),
+  [
+    "/health",
+    "/api",
+    "/auth",
+    "/workspaces",
+    "/invitations",
+    "/pages",
+    "/databases",
+    "/properties",
+    "/rows",
+    "/uploads",
+  ].map((p) => [p, API_TARGET]),
 );
 
 // https://vite.dev/config/

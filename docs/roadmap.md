@@ -39,6 +39,11 @@ Dari Fase 3 (Block Editor):
 - Hapus objek storage saat page dihapus permanen (kini objek yatim dibiarkan).
 - Kuota/limit upload per workspace, embed file non-gambar, cover image.
 
+Dari Fase 4 (Database Sederhana):
+- Relation, rollup, formula; view lain (board/calendar/timeline); grouping.
+- Filter & sort tersimpan di server (kini client-side); pagination baris (Fase 8).
+- Hapus baris Database saat block database dihapus dari editor (kini objek yatim).
+
 ## Definition of Done (berlaku semua fase)
 
 - Kriteria selesai fase terpenuhi.

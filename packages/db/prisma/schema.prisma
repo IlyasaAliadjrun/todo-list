@@ -1,5 +1,6 @@
 // Prisma schema — satu-satunya jalur ke database (lihat docs/architecture.md).
 // Fase 1: Auth & Workspace. Fase 2: Page & hierarki (sidebar tree).
+// Fase 4: Database sederhana (table view).
 
 generator client {
   provider = "prisma-client-js"
@@ -19,6 +20,16 @@ enum WorkspaceRole {
   OWNER
   ADMIN
   MEMBER
+}
+
+enum PropertyType {
+  TEXT
+  NUMBER
+  SELECT
+  MULTI_SELECT
+  CHECKBOX
+  DATE
+  URL
 }
 
 model User {
@@ -64,6 +75,7 @@ model Workspace {
   members     WorkspaceMember[]
   invitations WorkspaceInvitation[]
   pages       Page[]
+  databases   Database[]
 }
 
 model WorkspaceMember {
@@ -120,6 +132,67 @@ model Page {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  databases Database[]
+
   @@index([workspaceId, parentId, order])
   @@index([workspaceId, isArchived])
+}
+
+/// Database sederhana (table view) — disisipkan sebagai block di sebuah page.
+model Database {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  pageId      String?
+  page        Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  title       String    @default("Untitled")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  properties DatabaseProperty[]
+  rows       DatabaseRow[]
+
+  @@index([workspaceId])
+  @@index([pageId])
+}
+
+model DatabaseProperty {
+  id         String       @id @default(cuid())
+  databaseId String
+  database   Database     @relation(fields: [databaseId], references: [id], onDelete: Cascade)
+  name       String       @default("Kolom")
+  type       PropertyType @default(TEXT)
+  /// Untuk SELECT/MULTI_SELECT: array { id, name, color? }.
+  options    Json?
+  order      String
+  createdAt  DateTime     @default(now())
+
+  cells CellValue[]
+
+  @@index([databaseId, order])
+}
+
+model DatabaseRow {
+  id         String   @id @default(cuid())
+  databaseId String
+  database   Database @relation(fields: [databaseId], references: [id], onDelete: Cascade)
+  order      String
+  createdAt  DateTime @default(now())
+
+  cells CellValue[]
+
+  @@index([databaseId, order])
+}
+
+model CellValue {
+  id         String           @id @default(cuid())
+  rowId      String
+  row        DatabaseRow      @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  propertyId String
+  property   DatabaseProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  value      Json?
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([rowId, propertyId])
+  @@index([propertyId])
 }

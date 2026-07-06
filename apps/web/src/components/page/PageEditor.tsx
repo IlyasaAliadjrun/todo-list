@@ -1,9 +1,16 @@
 import "@blocknote/core/fonts/inter.css";
+import { filterSuggestionItems, insertOrUpdateBlock, type PartialBlock } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
-import { useCreateBlockNote } from "@blocknote/react";
-import type { PartialBlock } from "@blocknote/core";
+import {
+  getDefaultReactSlashMenuItems,
+  SuggestionMenuController,
+  useCreateBlockNote,
+} from "@blocknote/react";
+import { Table } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { editorSchema } from "@/components/page/blocks/database-block";
+import { createDatabase } from "@/lib/database.api";
 import { updatePageContent } from "@/lib/page.api";
 import { uploadFile } from "@/lib/upload";
 import { useThemeStore } from "@/stores/theme.store";
@@ -25,6 +32,7 @@ export function PageEditor({ pageId, initialContent }: Props) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const editor = useCreateBlockNote({
+    schema: editorSchema,
     initialContent:
       initialContent && initialContent.length > 0 ? (initialContent as PartialBlock[]) : undefined,
     uploadFile,
@@ -53,7 +61,33 @@ export function PageEditor({ pageId, initialContent }: Props) {
         {status === "saved" && "Tersimpan"}
         {status === "error" && <span className="text-destructive">Gagal menyimpan</span>}
       </div>
-      <BlockNoteView editor={editor} theme={theme} onChange={scheduleSave} />
+      <BlockNoteView editor={editor} theme={theme} onChange={scheduleSave} slashMenu={false}>
+        <SuggestionMenuController
+          triggerCharacter="/"
+          getItems={async (query) =>
+            filterSuggestionItems(
+              [
+                ...getDefaultReactSlashMenuItems(editor),
+                {
+                  title: "Database",
+                  subtext: "Tabel sederhana",
+                  aliases: ["database", "tabel", "table"],
+                  group: "Lanjutan",
+                  icon: <Table size={18} />,
+                  onItemClick: async () => {
+                    const db = await createDatabase({ pageId });
+                    insertOrUpdateBlock(editor, {
+                      type: "database",
+                      props: { databaseId: db.id },
+                    });
+                  },
+                },
+              ],
+              query,
+            )
+          }
+        />
+      </BlockNoteView>
     </div>
   );
 }
