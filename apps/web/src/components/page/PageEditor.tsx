@@ -50,6 +50,7 @@ export function PageEditor({ pageId, initialContent }: Props) {
   const [status, setStatus] = useState<"saved" | "saving" | "error">("saved");
   const [online, setOnline] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const destroyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seeded = useRef(false);
 
   const { ydoc, provider } = useMemo(() => {
@@ -59,16 +60,25 @@ export function PageEditor({ pageId, initialContent }: Props) {
       name: pageId,
       token: token ?? "",
       document: doc,
-      onStatus: ({ status: s }) => setOnline(s === "connected"),
+      onConnect: () => setOnline(true),
+      onDisconnect: () => setOnline(false),
     });
     // token dibaca sekali saat mount; pergantian token tak me-reconnect (backlog).
     return { ydoc: doc, provider: prov };
   }, [pageId]);
 
+  // Lifecycle provider tahan React StrictMode: tunda destroy agar remount-cepat
+  // (double-invoke dev) tidak memutus koneksi yang baru dibuat.
   useEffect(() => {
+    if (destroyTimer.current) {
+      clearTimeout(destroyTimer.current);
+      destroyTimer.current = null;
+    }
     return () => {
-      provider.destroy();
-      ydoc.destroy();
+      destroyTimer.current = setTimeout(() => {
+        provider.destroy();
+        ydoc.destroy();
+      }, 300);
     };
   }, [provider, ydoc]);
 
