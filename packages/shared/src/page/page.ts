@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PermissionLevelSchema } from "../permission/permission";
 
 /** Satu halaman (flat, tanpa children) — dipakai untuk detail & list. */
 export const PageSchema = z.object({
@@ -19,9 +20,10 @@ export type Page = z.infer<typeof PageSchema>;
 export const PageContentSchema = z.array(z.unknown());
 export type PageContent = z.infer<typeof PageContentSchema>;
 
-/** Detail halaman = Page + konten (dipakai saat membuka halaman). */
+/** Detail halaman = Page + konten + level akses user saat ini. */
 export const PageDetailSchema = PageSchema.extend({
   content: PageContentSchema.nullable(),
+  myLevel: PermissionLevelSchema,
 });
 export type PageDetail = z.infer<typeof PageDetailSchema>;
 

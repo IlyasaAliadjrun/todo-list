@@ -101,7 +101,10 @@ export class DatabaseController {
   }
 
   @Post("databases/:id/rows")
-  addRow(@Param("id") databaseId: string, @CurrentUser() user: AuthenticatedUser): Promise<Database> {
+  addRow(
+    @Param("id") databaseId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<Database> {
     return this.db.addRow(databaseId, user.id);
   }
 

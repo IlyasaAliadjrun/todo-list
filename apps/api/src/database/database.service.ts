@@ -4,11 +4,13 @@ import {
   type CreatePropertyInput,
   type Database as DatabaseDto,
   type DatabaseProperty as PropertyDto,
+  type PermissionLevel,
   type SelectOption,
   type UpdatePropertyInput,
 } from "@notion/shared";
 import { Prisma } from "@notion/db";
 import { generateKeyBetween } from "fractional-indexing";
+import { PermissionService } from "../permission/permission.service";
 import { PrismaService } from "../prisma/prisma.service";
 
 type OrderedRef = { id: string; order: string };
@@ -19,39 +21,51 @@ function toJson(value: unknown): Prisma.InputJsonValue | typeof Prisma.DbNull {
 
 @Injectable()
 export class DatabaseService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly permissions: PermissionService,
+  ) {}
 
-  private async requireMembership(workspaceId: string, userId: string): Promise<void> {
+  /** Akses database mengikuti akses halaman tempatnya (via permission per-page). */
+  private async requireDbLevel(
+    db: { pageId: string | null; workspaceId: string },
+    userId: string,
+    min: PermissionLevel,
+  ): Promise<void> {
+    if (db.pageId) {
+      await this.permissions.requireLevel(db.pageId, userId, min);
+      return;
+    }
     const membership = await this.prisma.workspaceMember.findUnique({
-      where: { workspaceId_userId: { workspaceId, userId } },
+      where: { workspaceId_userId: { workspaceId: db.workspaceId, userId } },
     });
     if (!membership) throw new NotFoundException("Database tidak ditemukan");
   }
 
-  private async ownedDatabase(id: string, userId: string) {
+  private async ownedDatabase(id: string, userId: string, min: PermissionLevel = "EDIT") {
     const db = await this.prisma.database.findUnique({ where: { id } });
     if (!db) throw new NotFoundException("Database tidak ditemukan");
-    await this.requireMembership(db.workspaceId, userId);
+    await this.requireDbLevel(db, userId, min);
     return db;
   }
 
-  private async ownedProperty(id: string, userId: string) {
+  private async ownedProperty(id: string, userId: string, min: PermissionLevel = "EDIT") {
     const prop = await this.prisma.databaseProperty.findUnique({
       where: { id },
       include: { database: true },
     });
     if (!prop) throw new NotFoundException("Kolom tidak ditemukan");
-    await this.requireMembership(prop.database.workspaceId, userId);
+    await this.requireDbLevel(prop.database, userId, min);
     return prop;
   }
 
-  private async ownedRow(id: string, userId: string) {
+  private async ownedRow(id: string, userId: string, min: PermissionLevel = "EDIT") {
     const row = await this.prisma.databaseRow.findUnique({
       where: { id },
       include: { database: true },
     });
     if (!row) throw new NotFoundException("Baris tidak ditemukan");
-    await this.requireMembership(row.database.workspaceId, userId);
+    await this.requireDbLevel(row.database, userId, min);
     return row;
   }
 
@@ -103,7 +117,7 @@ export class DatabaseService {
     if (!input.pageId) throw new BadRequestException("pageId wajib untuk membuat database");
     const page = await this.prisma.page.findUnique({ where: { id: input.pageId } });
     if (!page) throw new NotFoundException("Halaman tidak ditemukan");
-    await this.requireMembership(page.workspaceId, userId);
+    await this.permissions.requireLevel(input.pageId, userId, "EDIT");
 
     const db = await this.prisma.$transaction(async (tx) => {
       const created = await tx.database.create({
@@ -131,7 +145,7 @@ export class DatabaseService {
   }
 
   async getDatabase(id: string, userId: string): Promise<DatabaseDto> {
-    await this.ownedDatabase(id, userId);
+    await this.ownedDatabase(id, userId, "VIEW");
     return this.loadFull(id);
   }
 

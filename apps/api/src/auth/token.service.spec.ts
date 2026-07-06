@@ -28,13 +28,28 @@ function makeFakePrisma(store: Map<string, FakeSession>) {
     session: {
       findUnique: async ({ where: { tokenHash } }: { where: { tokenHash: string } }) =>
         store.get(tokenHash) ?? null,
-      create: async ({ data }: { data: Omit<FakeSession, "id" | "revokedAt" | "replacedById"> }) => {
+      create: async ({
+        data,
+      }: {
+        data: Omit<FakeSession, "id" | "revokedAt" | "replacedById">;
+      }) => {
         seq += 1;
-        const session: FakeSession = { id: `gen-${seq}`, revokedAt: null, replacedById: null, ...data };
+        const session: FakeSession = {
+          id: `gen-${seq}`,
+          revokedAt: null,
+          replacedById: null,
+          ...data,
+        };
         store.set(session.tokenHash, session);
         return session;
       },
-      update: async ({ where: { id }, data }: { where: { id: string }; data: Partial<FakeSession> }) => {
+      update: async ({
+        where: { id },
+        data,
+      }: {
+        where: { id: string };
+        data: Partial<FakeSession>;
+      }) => {
         for (const s of store.values()) if (s.id === id) Object.assign(s, data);
         return {};
       },

@@ -35,6 +35,7 @@ function collabWsUrl(): string {
 interface Props {
   pageId: string;
   initialContent: unknown[] | null;
+  editable?: boolean;
 }
 
 /**
@@ -42,7 +43,7 @@ interface Props {
  * kebenaran real-time; Page.content (JSON) tetap di-autosave sebagai snapshot.
  * Di-remount per halaman via key={pageId}. Lihat ADR 0007.
  */
-export function PageEditor({ pageId, initialContent }: Props) {
+export function PageEditor({ pageId, initialContent, editable = true }: Props) {
   const theme = useThemeStore((s) => s.theme);
   const user = useAuthStore((s) => s.user);
   const token = useAuthStore((s) => s.accessToken);
@@ -124,6 +125,7 @@ export function PageEditor({ pageId, initialContent }: Props) {
   }, []);
 
   function scheduleSave(): void {
+    if (!editable) return; // viewer/commenter tak menyimpan snapshot (hindari 403)
     setStatus("saving");
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
@@ -152,7 +154,13 @@ export function PageEditor({ pageId, initialContent }: Props) {
         {status === "saved" && "Tersimpan"}
         {status === "error" && <span className="text-destructive">Gagal menyimpan</span>}
       </div>
-      <BlockNoteView editor={editor} theme={theme} onChange={scheduleSave} slashMenu={false}>
+      <BlockNoteView
+        editor={editor}
+        editable={editable}
+        theme={theme}
+        onChange={scheduleSave}
+        slashMenu={false}
+      >
         <SuggestionMenuController
           triggerCharacter="/"
           getItems={async (query) =>

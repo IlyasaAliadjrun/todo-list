@@ -104,3 +104,23 @@ export type {
   MoveInput,
   UpdateCellInput,
 } from "./database/database";
+
+export {
+  PermissionLevelSchema,
+  PermissionSubjectSchema,
+  LEVEL_RANK,
+  levelAtLeast,
+  resolveEffectiveLevel,
+  SetPagePermissionInputSchema,
+  PagePermissionEntrySchema,
+  PagePermissionsResponseSchema,
+} from "./permission/permission";
+export type {
+  PermissionLevel,
+  PermissionSubject,
+  PermissionGrant,
+  AncestorNode,
+  SetPagePermissionInput,
+  PagePermissionEntry,
+  PagePermissionsResponse,
+} from "./permission/permission";

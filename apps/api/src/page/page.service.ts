@@ -5,17 +5,22 @@ import type {
   Page as PageDto,
   PageContent,
   PageDetail,
+  PermissionLevel,
   PageTreeNode,
   UpdatePageInput,
 } from "@notion/shared";
 import type { Prisma, Page as PageRow } from "@notion/db";
 import { generateKeyBetween } from "fractional-indexing";
+import { PermissionService } from "../permission/permission.service";
 import { PrismaService } from "../prisma/prisma.service";
 import { buildTree, collectSubtreeIds, wouldCreateCycle } from "./page.util";
 
 @Injectable()
 export class PageService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly permissions: PermissionService,
+  ) {}
 
   private toDto(page: PageRow): PageDto {
     return {
@@ -32,11 +37,15 @@ export class PageService {
     };
   }
 
-  private toDetailDto(page: PageRow): PageDetail {
-    return { ...this.toDto(page), content: (page.content as unknown as PageContent) ?? null };
+  private toDetailDto(page: PageRow, myLevel: PermissionLevel): PageDetail {
+    return {
+      ...this.toDto(page),
+      content: (page.content as unknown as PageContent) ?? null,
+      myLevel,
+    };
   }
 
-  /** Pastikan user anggota workspace; kalau bukan, sembunyikan keberadaannya (404). */
+  /** Keanggotaan workspace (untuk aksi level-workspace: buat root, tree, trash). */
   private async requireMembership(workspaceId: string, userId: string): Promise<void> {
     const membership = await this.prisma.workspaceMember.findUnique({
       where: { workspaceId_userId: { workspaceId, userId } },
@@ -44,37 +53,33 @@ export class PageService {
     if (!membership) throw new NotFoundException("Halaman tidak ditemukan");
   }
 
-  /** Ambil page milik user (via keanggotaan workspace) atau lempar 404. */
-  private async getOwnedPage(id: string, userId: string): Promise<PageRow> {
-    const page = await this.prisma.page.findUnique({ where: { id } });
-    if (!page) throw new NotFoundException("Halaman tidak ditemukan");
-    await this.requireMembership(page.workspaceId, userId);
-    return page;
-  }
-
   async getTree(workspaceId: string, userId: string): Promise<PageTreeNode[]> {
-    await this.requireMembership(workspaceId, userId);
+    const resolver = await this.permissions.buildResolver(workspaceId, userId);
+    if (!resolver) throw new NotFoundException("Workspace tidak ditemukan");
     const pages = await this.prisma.page.findMany({
       where: { workspaceId, isArchived: false },
       orderBy: { order: "asc" },
     });
-    return buildTree(pages.map((p) => this.toDto(p)));
+    // Hanya tampilkan halaman yang minimal bisa dilihat user (>= VIEW).
+    const visible = pages.filter((p) => resolver(p.id) !== null);
+    return buildTree(visible.map((p) => this.toDto(p)));
   }
 
   async getPage(id: string, userId: string): Promise<PageDetail> {
-    const page = await this.getOwnedPage(id, userId);
-    if (page.isArchived) throw new NotFoundException("Halaman tidak ditemukan");
-    return this.toDetailDto(page);
+    const level = await this.permissions.requireLevel(id, userId, "VIEW");
+    const page = await this.prisma.page.findUnique({ where: { id } });
+    if (!page || page.isArchived) throw new NotFoundException("Halaman tidak ditemukan");
+    return this.toDetailDto(page, level);
   }
 
-  /** Simpan konten dokumen (autosave). Last-write-wins (lihat ADR 0005). */
+  /** Simpan konten dokumen (autosave). Butuh EDIT. Last-write-wins (ADR 0005). */
   async updateContent(id: string, userId: string, content: PageContent): Promise<PageDetail> {
-    await this.getOwnedPage(id, userId);
+    const level = await this.permissions.requireLevel(id, userId, "EDIT");
     const page = await this.prisma.page.update({
       where: { id },
       data: { content: content as unknown as Prisma.InputJsonValue },
     });
-    return this.toDetailDto(page);
+    return this.toDetailDto(page, level);
   }
 
   async create(workspaceId: string, userId: string, input: CreatePageInput): Promise<PageDto> {
@@ -86,6 +91,8 @@ export class PageService {
         where: { id: parentId, workspaceId, isArchived: false },
       });
       if (!parent) throw new BadRequestException("Halaman induk tidak valid");
+      // Membuat sub-halaman butuh hak EDIT pada induk.
+      await this.permissions.requireLevel(parentId, userId, "EDIT");
     }
 
     const last = await this.prisma.page.findFirst({
@@ -108,7 +115,7 @@ export class PageService {
   }
 
   async update(id: string, userId: string, input: UpdatePageInput): Promise<PageDto> {
-    await this.getOwnedPage(id, userId);
+    await this.permissions.requireLevel(id, userId, "EDIT");
     const page = await this.prisma.page.update({
       where: { id },
       data: {
@@ -121,7 +128,8 @@ export class PageService {
   }
 
   async move(id: string, userId: string, input: MovePageInput): Promise<PageDto> {
-    const page = await this.getOwnedPage(id, userId);
+    await this.permissions.requireLevel(id, userId, "EDIT");
+    const page = await this.prisma.page.findUniqueOrThrow({ where: { id } });
     const newParentId = input.parentId ?? null;
 
     const edges = await this.prisma.page.findMany({
@@ -135,11 +143,17 @@ export class PageService {
       if (wouldCreateCycle(edges, id, newParentId)) {
         throw new BadRequestException("Tidak bisa memindahkan halaman ke dalam turunannya sendiri");
       }
+      // Memindahkan ke bawah induk baru butuh EDIT pada induk itu.
+      await this.permissions.requireLevel(newParentId, userId, "EDIT");
     }
 
-    // Sibling target (tanpa halaman ini), terurut, untuk hitung fractional order.
     const siblings = await this.prisma.page.findMany({
-      where: { workspaceId: page.workspaceId, parentId: newParentId, isArchived: false, NOT: { id } },
+      where: {
+        workspaceId: page.workspaceId,
+        parentId: newParentId,
+        isArchived: false,
+        NOT: { id },
+      },
       orderBy: { order: "asc" },
       select: { id: true, order: true },
     });
@@ -153,7 +167,6 @@ export class PageService {
     } else {
       const idx = siblings.findIndex((s) => s.id === afterId);
       if (idx < 0) {
-        // afterId bukan sibling valid → taruh di akhir.
         lower = siblings[siblings.length - 1]?.order ?? null;
         upper = null;
       } else {
@@ -171,7 +184,8 @@ export class PageService {
   }
 
   async archive(id: string, userId: string): Promise<{ archived: number }> {
-    const page = await this.getOwnedPage(id, userId);
+    await this.permissions.requireLevel(id, userId, "EDIT");
+    const page = await this.prisma.page.findUniqueOrThrow({ where: { id } });
     const edges = await this.prisma.page.findMany({
       where: { workspaceId: page.workspaceId },
       select: { id: true, parentId: true },
@@ -185,9 +199,9 @@ export class PageService {
   }
 
   async restore(id: string, userId: string): Promise<PageDto> {
-    const page = await this.getOwnedPage(id, userId);
+    await this.permissions.requireLevel(id, userId, "EDIT");
+    const page = await this.prisma.page.findUniqueOrThrow({ where: { id } });
 
-    // Bila induk sudah tidak ada / masih di trash, lepas ke root agar tak orphan.
     let parentId = page.parentId;
     if (parentId) {
       const parent = await this.prisma.page.findUnique({ where: { id: parentId } });
@@ -213,7 +227,7 @@ export class PageService {
   }
 
   async remove(id: string, userId: string): Promise<void> {
-    await this.getOwnedPage(id, userId);
+    await this.permissions.requireLevel(id, userId, "EDIT");
     await this.prisma.page.delete({ where: { id } }); // cascade ke turunan
   }
 

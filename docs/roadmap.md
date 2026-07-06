@@ -50,6 +50,12 @@ Dari Fase 5 (Kolaborasi Real-time):
 - Adapter Redis Hocuspocus untuk scaling multi-instance (Fase 8).
 - Comment threads real-time, riwayat versi, cursor chat.
 
+Dari Fase 6 (Sharing & Permission):
+- Sinkronisasi Yjs LIVE untuk viewer read-only (kini memuat konten saat buka saja).
+- Komentar/thread halaman (level COMMENT sudah ada di model).
+- Share-link publik (view-only via token), berbagi ke user di luar workspace.
+- Permission granular per-block; audit log akses.
+
 ## Definition of Done (berlaku semua fase)
 
 - Kriteria selesai fase terpenuhi.

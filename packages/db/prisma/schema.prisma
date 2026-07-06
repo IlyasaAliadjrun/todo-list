@@ -32,6 +32,17 @@ enum PropertyType {
   URL
 }
 
+enum PermissionLevel {
+  VIEW
+  COMMENT
+  EDIT
+}
+
+enum PermissionSubject {
+  USER
+  WORKSPACE
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -134,10 +145,28 @@ model Page {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  databases Database[]
+  databases   Database[]
+  permissions PagePermission[]
 
   @@index([workspaceId, parentId, order])
   @@index([workspaceId, isArchived])
+}
+
+/// Akses per halaman untuk seorang user atau seluruh workspace. Diwarisi ke
+/// sub-page kecuali di-override (lihat ADR 0008).
+model PagePermission {
+  id          String            @id @default(cuid())
+  pageId      String
+  page        Page              @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  subjectType PermissionSubject
+  /// userId (USER) atau workspaceId (WORKSPACE).
+  subjectId   String
+  level       PermissionLevel   @default(VIEW)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@unique([pageId, subjectType, subjectId])
+  @@index([pageId])
 }
 
 /// Database sederhana (table view) — disisipkan sebagai block di sebuah page.

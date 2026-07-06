@@ -108,7 +108,12 @@ docker compose up -d      # nyalakan postgres, redis, minio
   persistensi snapshot Yjs di `Page.yjsState`, `Page.content` JSON tetap snapshot
   (lihat ADR 0007). Frontend: BlockNote mode collaboration (HocuspocusProvider),
   presence cursor+nama, indikator Live/Offline, proxy ws Vite `/collab`.
-- Fase berikutnya: **Fase 6 — Sharing & Permission**.
+- **Fase 6 (Sharing & Permission) — SELESAI.** `PagePermission` (USER/WORKSPACE,
+  VIEW/COMMENT/EDIT), resolusi efektif dengan pewarisan+override (`resolveEffectiveLevel`,
+  default EDIT kompatibel Fase 2, OWNER/ADMIN bypass), enforcement di REST page/database
+  (≥VIEW baca, ≥EDIT tulis) + koneksi Yjs (read-only bila <EDIT), `myLevel` di detail
+  (lihat ADR 0008). Frontend: dialog Bagikan + editor/judul read-only per level.
+- Fase berikutnya: **Fase 7 — Search, Favorites & Trash**.
 - Lihat `docs/roadmap.md` untuk daftar fase & kriteria selesai.
 
 ## Slash command tersedia (lihat .claude/commands/)

@@ -1,8 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import type { UpdatePageInput } from "@notion/shared";
+import { Lock, Share2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageEditor } from "@/components/page/PageEditor";
+import { ShareDialog } from "@/components/page/ShareDialog";
+import { Button } from "@/components/ui/button";
 import { getPage, updatePage } from "@/lib/page.api";
 
 export function PageDetail() {
@@ -18,6 +21,7 @@ export function PageDetail() {
 
   const [title, setTitle] = useState("");
   const [icon, setIcon] = useState("");
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     if (page) {
@@ -37,20 +41,36 @@ export function PageDetail() {
   if (isLoading) return <p className="text-sm text-muted-foreground">Memuat…</p>;
   if (isError || !page) return <p className="text-sm text-destructive">Halaman tidak ditemukan.</p>;
 
+  const canEdit = page.myLevel === "EDIT";
+
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <input
-        value={icon}
-        onChange={(e) => setIcon(e.target.value)}
-        onBlur={() => {
-          const next = icon.trim() || null;
-          if (next !== page.icon) saveMut.mutate({ icon: next });
-        }}
-        maxLength={4}
-        placeholder="🙂"
-        aria-label="Ikon halaman (emoji)"
-        className="h-14 w-14 rounded-md border border-input bg-background text-center text-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      />
+      <div className="flex items-start justify-between gap-2">
+        <input
+          value={icon}
+          onChange={(e) => setIcon(e.target.value)}
+          onBlur={() => {
+            const next = icon.trim() || null;
+            if (next !== page.icon) saveMut.mutate({ icon: next });
+          }}
+          maxLength={4}
+          placeholder="🙂"
+          readOnly={!canEdit}
+          aria-label="Ikon halaman (emoji)"
+          className="h-14 w-14 rounded-md border border-input bg-background text-center text-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+        />
+        <div className="flex items-center gap-2">
+          {!canEdit && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Lock className="h-3.5 w-3.5" />
+              {page.myLevel === "VIEW" ? "Hanya lihat" : "Bisa komentar"}
+            </span>
+          )}
+          <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
+            <Share2 className="mr-1 h-3.5 w-3.5" /> Bagikan
+          </Button>
+        </div>
+      </div>
 
       <input
         value={title}
@@ -63,10 +83,13 @@ export function PageDetail() {
           if (e.key === "Enter") e.currentTarget.blur();
         }}
         placeholder="Untitled"
+        readOnly={!canEdit}
         className="w-full bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground"
       />
 
-      <PageEditor key={page.id} pageId={page.id} initialContent={page.content} />
+      <PageEditor key={page.id} pageId={page.id} initialContent={page.content} editable={canEdit} />
+
+      {shareOpen && <ShareDialog pageId={page.id} onClose={() => setShareOpen(false)} />}
     </div>
   );
 }
