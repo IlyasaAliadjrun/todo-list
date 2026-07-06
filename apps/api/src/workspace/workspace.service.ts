@@ -14,6 +14,7 @@ import type {
   WorkspaceMember,
   WorkspaceSummary,
 } from "@notion/shared";
+import { MailService } from "../mail/mail.service";
 import { createHash, randomBytes } from "node:crypto";
 import { uniqueSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
@@ -28,7 +29,10 @@ const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 hari
 
 @Injectable()
 export class WorkspaceService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mail: MailService,
+  ) {}
 
   private hashToken(raw: string): string {
     return createHash("sha256").update(raw).digest("hex");
@@ -123,13 +127,26 @@ export class WorkspaceService {
       },
     });
 
+    // Kirim email undangan (best-effort). Token tetap dikembalikan sebagai fallback.
+    const [workspace, inviter] = await Promise.all([
+      this.prisma.workspace.findUnique({ where: { id: workspaceId }, select: { name: true } }),
+      this.prisma.user.findUnique({ where: { id: actorId }, select: { name: true, email: true } }),
+    ]);
+    const emailSent = await this.mail.sendWorkspaceInvite({
+      to: input.email,
+      workspaceName: workspace?.name ?? "workspace",
+      inviterName: inviter?.name || inviter?.email || "Seseorang",
+      token: rawToken,
+    });
+
     return {
       id: invitation.id,
       workspaceId: invitation.workspaceId,
       email: invitation.email,
       role: invitation.role,
       expiresAt: invitation.expiresAt.toISOString(),
-      token: rawToken, // hanya dikembalikan sekali (Fase 1 tanpa email)
+      token: rawToken, // fallback bila email nonaktif
+      emailSent,
     };
   }
 

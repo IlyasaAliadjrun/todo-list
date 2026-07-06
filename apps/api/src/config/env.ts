@@ -38,6 +38,20 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   // Rate limit global (request per menit per IP) — anti-abuse kasar.
   RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(600),
+
+  // Email SMTP (nodemailer). Bila MAIL_HOST kosong, email dinonaktifkan (undangan
+  // tetap jalan via token). Kompatibel Resend/Mailgun/SendGrid/SES/Gmail.
+  MAIL_HOST: z.string().optional(),
+  MAIL_PORT: z.coerce.number().int().positive().default(587),
+  MAIL_SECURE: z
+    .string()
+    .default("false")
+    .transform((v) => v === "true"),
+  MAIL_USER: z.string().optional(),
+  MAIL_PASS: z.string().optional(),
+  MAIL_FROM: z.string().default("My Notepad <no-reply@localhost>"),
+  // URL aplikasi (untuk membentuk link undangan). Default = WEB_ORIGIN.
+  APP_URL: z.string().url().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

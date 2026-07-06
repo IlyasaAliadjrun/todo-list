@@ -35,7 +35,8 @@
     "helmet": "^8.0.0",
     "nestjs-pino": "^4.1.0",
     "pino-http": "^10.3.0",
-    "@nestjs/throttler": "^6.2.1"
+    "@nestjs/throttler": "^6.2.1",
+    "nodemailer": "^6.9.16"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.9",
@@ -48,6 +49,7 @@
     "typescript": "^5.6.3",
     "vitest": "^2.1.8",
     "@types/ws": "^8.5.13",
-    "pino-pretty": "^13.0.0"
+    "pino-pretty": "^13.0.0",
+    "@types/nodemailer": "^6.4.17"
   }
 }

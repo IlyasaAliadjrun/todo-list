@@ -11,6 +11,7 @@ import { loadEnv } from "./config/env";
 import { DatabaseModule } from "./database/database.module";
 import { FavoriteModule } from "./favorite/favorite.module";
 import { HealthModule } from "./health/health.module";
+import { MailModule } from "./mail/mail.module";
 import { PageModule } from "./page/page.module";
 import { PermissionModule } from "./permission/permission.module";
 import { PrismaModule } from "./prisma/prisma.module";
@@ -46,6 +47,7 @@ const env = loadEnv();
     ScheduleModule.forRoot(),
     PrismaModule,
     RedisModule,
+    MailModule,
     AuthModule,
     PermissionModule,
     WorkspaceModule,

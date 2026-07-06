@@ -98,6 +98,9 @@ importers:
       nestjs-pino:
         specifier: ^4.1.0
         version: 4.6.1(@nestjs/common@10.4.22(reflect-metadata@0.2.2)(rxjs@7.8.2))(pino-http@10.5.0)(pino@9.14.0)(rxjs@7.8.2)
+      nodemailer:
+        specifier: ^6.9.16
+        version: 6.10.1
       pino-http:
         specifier: ^10.3.0
         version: 10.5.0
@@ -135,6 +138,9 @@ importers:
       '@types/node':
         specifier: ^22.10.2
         version: 22.20.0
+      '@types/nodemailer':
+        specifier: ^6.4.17
+        version: 6.4.24
       '@types/ws':
         specifier: ^8.5.13
         version: 8.18.1
@@ -1797,6 +1803,9 @@ packages:
 
   '@types/node@22.20.0':
     resolution: {integrity: sha512-QWlFW2wf3nTjC13/DqRnBpR4ZO36VJH/JVBkA/vcnmbTBNQIlnObqyqZE1tUR7+Ni23Lda8R1BxMfbXRpCUx5g==}
+
+  '@types/nodemailer@6.4.24':
+    resolution: {integrity: sha512-Ww4u0rT9wQNXh4JiQaIwx3QWdcOFXzOjQA2zc+jtFYNmQiT4mIUqcDin51bDFdkzKubFnQCZNK7FIHlPKQ/q9w==}
 
   '@types/parse5@6.0.3':
     resolution: {integrity: sha512-SuT16Q1K51EAVPz1K29DJ/sXjhSQ0zjvsypYJ6tlwVsRV9jwW5Adq2ch8Dq8kDBCkYnELS7N7VNCSB5nC56t/g==}
@@ -3656,6 +3665,10 @@ packages:
   node-releases@2.0.50:
     resolution: {integrity: sha512-J6l92tKHX6w8Jy5nO1Vuc01NoIiRGi/d6qBKVxh+IQ8Cr3b6HbVNfKiF8ZpFKufTwpwxMmce2W3iQZ861ZRyTg==}
     engines: {node: '>=18'}
+
+  nodemailer@6.10.1:
+    resolution: {integrity: sha512-Z+iLaBGVaSjbIzQ4pX6XV41HrooLsQ10ZWPUehGmuantvzWoDVBnmsdUcOIDM1t+yPor5pDhVlDESgOMEGxhHA==}
+    engines: {node: '>=6.0.0'}
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -6731,6 +6744,10 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/nodemailer@6.4.24':
+    dependencies:
+      '@types/node': 22.20.0
+
   '@types/parse5@6.0.3': {}
 
   '@types/prop-types@15.7.15': {}
@@ -8934,6 +8951,8 @@ snapshots:
   node-gyp-build@4.8.4: {}
 
   node-releases@2.0.50: {}
+
+  nodemailer@6.10.1: {}
 
   normalize-path@3.0.0: {}
 

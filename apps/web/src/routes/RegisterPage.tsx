@@ -20,7 +20,7 @@ export function RegisterPage() {
     setError(null);
     try {
       await register({ email, password, name: name.trim() || undefined });
-      await navigate({ to: "/" });
+      await navigate({ to: sessionStorage.getItem("pendingInvite") ? "/invite" : "/" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal mendaftar");
     } finally {

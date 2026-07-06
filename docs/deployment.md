@@ -75,6 +75,15 @@ gunzip -c backup-YYYY-MM-DD.sql.gz | docker exec -i notion-clone-prod-postgres-1
 
 Uji restore secara berkala (backup tak teruji = tak ada backup).
 
+## Email (undangan)
+
+Undangan workspace dikirim via **SMTP (nodemailer)**. Set env `MAIL_HOST`, `MAIL_PORT`,
+`MAIL_SECURE`, `MAIL_USER`, `MAIL_PASS`, `MAIL_FROM`, dan `APP_URL` (untuk link undangan).
+Kompatibel Resend/Mailgun/SendGrid/SES/Gmail — cukup ganti kredensial. Bila `MAIL_HOST`
+kosong, email dinonaktifkan dan undangan memakai **token copy-paste** (fallback).
+Produksi: pakai `MAIL_FROM` dengan **domain terverifikasi** (SPF/DKIM) agar tak masuk spam.
+Link undangan `/invite?token=…` menangani alur daftar/login → auto-join.
+
 ## Observability
 
 - Structured logging **pino** + `x-request-id` per request.

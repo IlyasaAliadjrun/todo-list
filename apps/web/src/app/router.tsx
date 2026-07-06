@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-router";
 import { AppLayout } from "@/routes/AppLayout";
 import { HomePage } from "@/routes/HomePage";
+import { InvitePage } from "@/routes/InvitePage";
 import { LoginPage } from "@/routes/LoginPage";
 import { PageDetail } from "@/routes/PageDetail";
 import { RegisterPage } from "@/routes/RegisterPage";
@@ -31,6 +32,13 @@ const registerRoute = createRoute({
   beforeLoad: () => {
     if (useAuthStore.getState().status === "authed") throw redirect({ to: "/" });
   },
+});
+
+// Publik: menangani link undangan email (auth ditangani di dalam komponen).
+const inviteRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/invite",
+  component: InvitePage,
 });
 
 // Layout terproteksi: redirect ke /login bila belum auth (route guard).
@@ -64,6 +72,7 @@ const trashRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
+  inviteRoute,
   appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute]),
 ]);
 

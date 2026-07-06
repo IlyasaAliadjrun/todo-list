@@ -34,6 +34,8 @@ export function HomePage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<AssignableRole>("MEMBER");
   const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [inviteEmailSent, setInviteEmailSent] = useState(false);
+  const [invitedTo, setInvitedTo] = useState("");
   const [inviteError, setInviteError] = useState<string | null>(null);
 
   const [wsName, setWsName] = useState("");
@@ -45,6 +47,8 @@ export function HomePage() {
     mutationFn: () => inviteMember(selected!.id, { email: inviteEmail, role: inviteRole }),
     onSuccess: (inv) => {
       setInviteToken(inv.token ?? null);
+      setInviteEmailSent(inv.emailSent ?? false);
+      setInvitedTo(inviteEmail);
       setInviteEmail("");
       qc.invalidateQueries({ queryKey: ["members", selected!.id] });
     },
@@ -133,12 +137,21 @@ export function HomePage() {
           {inviteError && <p className="mt-2 text-sm text-destructive">{inviteError}</p>}
           {inviteToken && (
             <div className="mt-3 rounded-md bg-secondary p-3 text-sm">
-              <p className="mb-1 font-medium">Token undangan (belum ada email di Fase 1):</p>
+              {inviteEmailSent ? (
+                <p className="mb-1 font-medium text-emerald-600">
+                  ✓ Email undangan terkirim ke {invitedTo}.
+                </p>
+              ) : (
+                <p className="mb-1 font-medium">
+                  Email belum aktif — bagikan token ini secara manual:
+                </p>
+              )}
               <code className="block break-all rounded bg-background px-2 py-1 text-xs">
                 {inviteToken}
               </code>
               <p className="mt-1 text-xs text-muted-foreground">
-                Bagikan token ini; penerima login lalu tempel di &quot;Terima undangan&quot;.
+                Penerima buka link undangan (atau login lalu tempel token di &quot;Terima
+                undangan&quot;).
               </p>
             </div>
           )}

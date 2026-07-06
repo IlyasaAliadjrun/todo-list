@@ -54,6 +54,8 @@ export const InvitationSchema = z.object({
   role: WorkspaceRoleSchema,
   expiresAt: z.string(),
   token: z.string().optional(),
+  /** true bila email undangan berhasil dikirim (SMTP aktif). */
+  emailSent: z.boolean().optional(),
 });
 export type Invitation = z.infer<typeof InvitationSchema>;
 

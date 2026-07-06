@@ -19,7 +19,7 @@ export function LoginPage() {
     setError(null);
     try {
       await login({ email, password });
-      await navigate({ to: "/" });
+      await navigate({ to: sessionStorage.getItem("pendingInvite") ? "/invite" : "/" });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal login");
     } finally {
