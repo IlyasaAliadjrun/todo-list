@@ -2,50 +2,96 @@
 
 ## Prinsip
 
-- Semua service (api, hocuspocus, web, postgres, redis, minio) sebagai container.
-- Config lewat env. Tidak ada secret di image atau repo.
-- Migrasi DB dijalankan sebagai langkah rilis terpisah, bukan saat boot app.
+- Semua service (api+hocuspocus, web, postgres, redis, minio) sebagai container.
+- Config lewat env; tidak ada secret di image/repo. Migrasi DB = langkah rilis terpisah.
 
-## Artefak
+## Artefak (Fase 8)
 
-- **Dockerfile produksi** multi-stage untuk `apps/api` dan `apps/web`.
-- `docker-compose.prod.yml` untuk deploy single-host / VPS.
-- Image di-build & di-push oleh GitHub Actions.
+- `apps/api/Dockerfile.prod` — API multi-stage, runtime **non-root**, `NODE_ENV=production`,
+  HEALTHCHECK ke `/health/live`.
+- `apps/web/Dockerfile.prod` + `apps/web/nginx.conf` — build statis Vite disajikan **Nginx**,
+  sekaligus **proxy** REST (`/auth`, `/pages`, …) & **WebSocket** (`/collab`) ke service `api`.
+- `docker-compose.prod.yml` — stack single-host, termasuk service `migrate` (sekali,
+  `prisma migrate deploy`) yang harus sukses sebelum `api` start.
 
-## Target deploy (pilih sesuai kebutuhan)
+## Deploy single-host (VPS)
 
-- **VPS Ubuntu** (mis. 22.04+ disarankan untuk produksi): `docker-compose.prod.yml`
-  + reverse proxy (Caddy/Nginx) + TLS.
-- **PaaS**: API & Hocuspocus di Fly.io/Railway; web di Vercel/Netlify (atau container
-  yang sama); Postgres & Redis terkelola; storage S3/R2.
+```bash
+# 1. Siapkan .env produksi (secret KUAT — jangan pakai default dev):
+cp .env.example .env
+#   - JWT_ACCESS_SECRET/JWT_REFRESH_SECRET: openssl rand -hex 32
+#   - POSTGRES_PASSWORD, S3_ACCESS_KEY, S3_SECRET_KEY: ganti semua
+#   - S3_PUBLIC_ENDPOINT: URL MinIO/S3 yang DIAKSES BROWSER (mis. https://storage.domain.com)
+#   - WEB_ORIGIN: https://app.domain.com
 
-## Variabel environment (lihat .env.example untuk daftar lengkap)
+# 2. Build & jalankan (migrate otomatis jalan sebelum api):
+docker compose -f docker-compose.prod.yml up -d --build
 
-- `DATABASE_URL`, `REDIS_URL`
-- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
-- `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`
-- `WEB_ORIGIN` (untuk CORS), `HOCUSPOCUS_URL`
+# 3. Cek health:
+curl -fsS http://localhost:80/health   # via nginx → api → {"status":"ok"}
+```
 
-## Prosedur rilis
+### TLS (WAJIB untuk produksi)
 
-1. CI hijau: lint → typecheck → unit → integration → e2e → build image.
-2. Jalankan migrasi DB terhadap database produksi (`prisma migrate deploy`).
-3. Deploy image baru (rolling). Pastikan health/readiness probe hijau.
-4. Smoke test alur inti (login, buat page, edit, share).
+Refresh-token cookie ber-flag **Secure** saat `NODE_ENV=production` → hanya terkirim
+lewat **HTTPS**. Taruh reverse proxy TLS (Caddy/Traefik/Nginx) di depan service `web`:
 
-## Backup & pemulihan
+```
+app.domain.com     → web:80   (SPA + proxy API/ws)
+storage.domain.com → minio:9000  (opsional, bila upload gambar dipakai)
+```
 
-- Backup Postgres terjadwal (dump harian + retensi). Uji restore berkala.
-- Backup bucket object storage (versioning bila tersedia).
+Contoh Caddy: `app.domain.com { reverse_proxy web:80 }` (Caddy urus sertifikat otomatis).
+
+## Alternatif PaaS / managed
+
+Kode portabel S3-compatible & Postgres/Redis standar:
+- **API+Hocuspocus**: Fly.io / Railway / VPS (butuh WebSocket support).
+- **Web**: Vercel/Netlify (static) — set proxy/redirect ke API, atau pakai container Nginx.
+- **DB/cache/storage**: Postgres & Redis terkelola; storage **Cloudflare R2 / Backblaze B2
+  / Supabase / MinIO self-host** (ganti `S3_*`, `S3_PUBLIC_ENDPOINT`).
+
+## Env penting (lihat `.env.example` untuk lengkap)
+
+`DATABASE_URL`, `REDIS_URL`, `JWT_ACCESS_SECRET`, `S3_ENDPOINT`, `S3_PUBLIC_ENDPOINT`,
+`S3_BUCKET`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `WEB_ORIGIN`, `HOCUSPOCUS_URL`,
+`RATE_LIMIT_PER_MIN`, `LOG_LEVEL`.
+
+## Migrasi DB
+
+- Rilis menjalankan `prisma migrate deploy` (idempoten, hanya migration baru).
+- Di compose prod: service `migrate` (one-shot) → `api` menunggu selesai.
+- Manual: `pnpm --filter @notion/db migrate:deploy`.
+
+## Backup & restore
+
+```bash
+# Backup Postgres (jadwalkan harian + retensi):
+docker exec notion-clone-prod-postgres-1 pg_dump -U notion notion | gzip > backup-$(date +%F).sql.gz
+# Restore:
+gunzip -c backup-YYYY-MM-DD.sql.gz | docker exec -i notion-clone-prod-postgres-1 psql -U notion notion
+# Object storage: aktifkan versioning bucket / mirror `mc mirror` ke lokasi kedua.
+```
+
+Uji restore secara berkala (backup tak teruji = tak ada backup).
 
 ## Observability
 
-- Structured logging (pino) dengan request id.
-- Health (`/health`) & readiness probe.
-- Error tracking (Sentry opsional) untuk web & api.
+- Structured logging **pino** + `x-request-id` per request.
+- Probe: `/health/live` (liveness), `/health` & `/health/ready` (readiness: DB+Redis).
+- Security headers via **helmet**; rate limit global (`RATE_LIMIT_PER_MIN`) + rate-limit
+  login berbasis Redis.
+- Sentry (opsional) via `SENTRY_DSN`.
+
+## Skala & keterbatasan (backlog)
+
+- Multi-instance: butuh **adapter Redis Hocuspocus** (pub/sub) + throttler storage Redis +
+  leader untuk cron purge. Kini single-instance.
+- Optimasi ukuran image API (prune/`pnpm deploy`).
+- Viewer collab live-sync (kini read-only memuat konten saat buka).
 
 ## Catatan Ubuntu 20.04
 
-- Standard support 20.04 sudah berakhir (fase ESM). Untuk host produksi jangka
-  panjang, aktifkan Ubuntu Pro/ESM atau rencanakan upgrade OS. Karena app berjalan
-  dalam container, upgrade OS host berisiko rendah terhadap app.
+Standard support 20.04 berakhir (fase ESM). Untuk host produksi jangka panjang, aktifkan
+Ubuntu Pro/ESM atau upgrade ke 22.04/24.04. App berjalan di container → upgrade OS host
+berisiko rendah terhadap app.

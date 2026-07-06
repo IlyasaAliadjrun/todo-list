@@ -59,7 +59,12 @@ Dari Fase 6 (Sharing & Permission):
 Dari Fase 7 (Search, Favorites & Trash):
 - Search fuzzy/typo tolerance & multi-bahasa (kini config `simple` literal).
 - Search konten database/komentar; highlight in-page saat lompat dari palette.
-- Purge terjadwal untuk multi-instance (leader election) — Fase 8.
+
+Dari Fase 8 (Hardening & Deploy):
+- Multi-instance: adapter Redis Hocuspocus, throttler storage Redis, leader untuk cron purge.
+- Optimasi ukuran image API (pnpm deploy/prune), Sentry, metrik Prometheus.
+- Pagination/lazy-load sidebar & list untuk skala sangat besar.
+- CDN/edge untuk web, blue-green/rolling deploy otomatis.
 
 ## Definition of Done (berlaku semua fase)
 

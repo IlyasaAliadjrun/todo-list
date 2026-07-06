@@ -1,8 +1,10 @@
 import "reflect-metadata";
-import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import cookieParser from "cookie-parser";
+import { json, urlencoded } from "express";
+import helmet from "helmet";
 import type { Server as HttpServer } from "node:http";
+import { Logger as PinoLogger } from "nestjs-pino";
 import { WebSocketServer } from "ws";
 import { AppModule } from "./app.module";
 import { CollabService } from "./collab/collab.service";
@@ -11,20 +13,27 @@ import { loadEnv } from "./config/env";
 
 async function bootstrap(): Promise<void> {
   const env = loadEnv();
-  const logger = new Logger("Bootstrap");
 
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true, bodyParser: false });
+  app.useLogger(app.get(PinoLogger));
+
+  // Security headers + batas ukuran payload.
+  app.use(helmet());
+  app.use(json({ limit: "2mb" }));
+  app.use(urlencoded({ extended: true, limit: "2mb" }));
+  app.use(cookieParser());
 
   app.enableCors({ origin: env.WEB_ORIGIN, credentials: true });
-  app.use(cookieParser());
   // Validasi input pakai Zod (ZodValidationPipe per-endpoint), bukan class-validator.
   app.useGlobalFilters(new AllExceptionsFilter());
   app.enableShutdownHooks();
 
   await app.listen(env.API_PORT, "0.0.0.0");
+
+  const logger = app.get(PinoLogger);
   logger.log(`API berjalan di http://localhost:${env.API_PORT} (env: ${env.NODE_ENV})`);
 
-  // Server Hocuspocus (Yjs) di path /collab pada HTTP server yang sama (lihat ADR 0007).
+  // Server Hocuspocus (Yjs) di path /collab pada HTTP server yang sama (ADR 0007).
   const collab = app.get(CollabService);
   const httpServer = app.getHttpServer() as HttpServer;
   const wss = new WebSocketServer({ noServer: true });

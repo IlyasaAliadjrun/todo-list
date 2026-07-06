@@ -118,8 +118,13 @@ docker compose up -d      # nyalakan postgres, redis, minio
   permission), Favorites (`Favorite`, `isFavorite` di detail), auto-purge trash cron
   (`@nestjs/schedule`, >30 hari) — lihat ADR 0009. Frontend: command palette Cmd/Ctrl+K
   (`cmdk`), section Favorit di sidebar, tombol bintang.
-- Fase berikutnya: **Fase 8 — Hardening, Performa & Deploy**.
-- Lihat `docs/roadmap.md` untuk daftar fase & kriteria selesai.
+- **Fase 8 (Hardening & Deploy) — SELESAI (v1.0.0).** Keamanan: helmet, rate-limit global
+  (throttler) + login RL Redis, batas payload. Observability: logging pino + `x-request-id`,
+  probe `/health/live` & `/health/ready`. Robustness FE: error boundary + retry backoff.
+  Deploy: `Dockerfile.prod` (api non-root, web Nginx) + `docker-compose.prod.yml` + service
+  migrate. E2E Playwright (alur inti) + CI GitHub Actions (quality + e2e). Lihat
+  `docs/deployment.md`.
+- **v1 SELESAI.** Backlog fase 9+ ada di `docs/roadmap.md`.
 
 ## Slash command tersedia (lihat .claude/commands/)
 

@@ -1,0 +1,22 @@
+# Produksi API (NestJS + Hocuspocus). Multi-stage; runtime sebagai non-root.
+# Optimasi ukuran image lebih lanjut (pnpm deploy/prune) = backlog.
+
+FROM node:22-alpine AS build
+RUN corepack enable
+WORKDIR /repo
+COPY . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm --filter @notion/db generate && pnpm build --filter=@notion/api
+
+FROM node:22-alpine AS run
+RUN corepack enable && addgroup -S app && adduser -S app -G app
+WORKDIR /repo
+ENV NODE_ENV=production
+COPY --from=build --chown=app:app /repo ./
+USER app
+WORKDIR /repo/apps/api
+EXPOSE 3001
+# Liveness ringan untuk orkestrator.
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD node -e "fetch('http://localhost:3001/health/live').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "dist/main.js"]

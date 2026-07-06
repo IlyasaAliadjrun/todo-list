@@ -11,15 +11,13 @@ concurrency:
 
 jobs:
   quality:
-    name: lint · typecheck · build
+    name: lint · typecheck · test · build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
         with:
           version: 11.9.0
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -27,20 +25,98 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # Prisma client dibutuhkan agar typecheck & build lolos.
       - name: Generate Prisma client
         run: pnpm db:generate
-
       - name: Lint
         run: pnpm lint
-
       - name: Typecheck
         run: pnpm typecheck
-
+      - name: Test (unit)
+        run: pnpm test
       - name: Build
         run: pnpm build
 
-      # Test unit sudah ada (health util); integration/e2e menyusul di fase berikut.
-      - name: Test
-        run: pnpm test
+  e2e:
+    name: e2e (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: notion
+          POSTGRES_PASSWORD: notion_dev_password
+          POSTGRES_DB: notion
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U notion -d notion"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      NODE_ENV: development
+      API_PORT: "3001"
+      WEB_PORT: "5173"
+      WEB_ORIGIN: http://localhost:5173
+      DATABASE_URL: postgresql://notion:notion_dev_password@localhost:5432/notion?schema=public
+      REDIS_URL: redis://localhost:6379
+      JWT_ACCESS_SECRET: ci_test_secret_minimal_0123456789
+      S3_ENDPOINT: http://localhost:9000
+      S3_ACCESS_KEY: minioadmin
+      S3_SECRET_KEY: minioadmin
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Generate Prisma client
+        run: pnpm db:generate
+
+      # .env dipakai oleh script dev (dotenv) & migration.
+      - name: Write .env
+        run: |
+          cat > .env <<EOF
+          NODE_ENV=development
+          API_PORT=3001
+          WEB_PORT=5173
+          WEB_ORIGIN=http://localhost:5173
+          DATABASE_URL=postgresql://notion:notion_dev_password@localhost:5432/notion?schema=public
+          REDIS_URL=redis://localhost:6379
+          REDIS_HOST=localhost
+          REDIS_PORT=6379
+          JWT_ACCESS_SECRET=ci_test_secret_minimal_0123456789
+          S3_ENDPOINT=http://localhost:9000
+          S3_ACCESS_KEY=minioadmin
+          S3_SECRET_KEY=minioadmin
+          EOF
+
+      - name: Apply migrations
+        run: pnpm --filter @notion/db migrate:deploy
+
+      - name: Build shared/db (dipakai api & web)
+        run: pnpm build --filter=@notion/api --filter=@notion/web
+
+      - name: Install Playwright browser
+        run: pnpm --filter @notion/web exec playwright install --with-deps chromium
+
+      - name: Run E2E
+        run: pnpm --filter @notion/web test:e2e
+        env:
+          CI: "true"
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-trace
+          path: apps/web/test-results/
+          retention-days: 7

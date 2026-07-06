@@ -3,7 +3,8 @@ import { RouterProvider } from "@tanstack/react-router";
 import React, { useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { router } from "@/app/router";
-import { refreshSession } from "@/lib/http";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ApiError, refreshSession } from "@/lib/http";
 import { useAuthStore } from "@/stores/auth.store";
 // Side-effect: menerapkan tema (light/dark) sedini mungkin untuk hindari flash.
 import "@/stores/theme.store";
@@ -11,7 +12,16 @@ import "@/index.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, staleTime: 5_000 },
+    queries: {
+      staleTime: 5_000,
+      // Retry dengan backoff eksponensial; jangan retry error klien (4xx).
+      retry: (failureCount, error) => {
+        if (error instanceof ApiError && error.status >= 400 && error.status < 500) return false;
+        return failureCount < 3;
+      },
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 15_000),
+    },
+    mutations: { retry: 0 },
   },
 });
 
@@ -42,8 +52,10 @@ if (!rootEl) throw new Error("Elemen #root tidak ditemukan");
 
 ReactDOM.createRoot(rootEl).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <Root />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <Root />
+      </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 );

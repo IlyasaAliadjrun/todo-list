@@ -36,6 +36,8 @@ const EnvSchema = z.object({
   S3_PUBLIC_ENDPOINT: z.string().url().optional(),
 
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  // Rate limit global (request per menit per IP) — anti-abuse kasar.
+  RATE_LIMIT_PER_MIN: z.coerce.number().int().positive().default(600),
 });
 
 export type Env = z.infer<typeof EnvSchema>;
