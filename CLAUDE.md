@@ -103,7 +103,12 @@ docker compose up -d      # nyalakan postgres, redis, minio
   (`normalizeCellValue`), ganti tipe best-effort (lihat ADR 0006). Frontend: BlockNote
   custom block `/database` + TableView (CRUD kolom/baris, edit sel, opsi select,
   reorder kolom, sort & filter client-side). Juga fix proxy dev (/pages,/databases,dst).
-- Fase berikutnya: **Fase 5 — Kolaborasi Real-time (Yjs + Hocuspocus)**.
+- **Fase 5 (Kolaborasi Real-time) — SELESAI.** Server Hocuspocus (Yjs) di `/collab`
+  pada HTTP server Nest, otorisasi koneksi per-dokumen (JWT + keanggotaan workspace),
+  persistensi snapshot Yjs di `Page.yjsState`, `Page.content` JSON tetap snapshot
+  (lihat ADR 0007). Frontend: BlockNote mode collaboration (HocuspocusProvider),
+  presence cursor+nama, indikator Live/Offline, proxy ws Vite `/collab`.
+- Fase berikutnya: **Fase 6 — Sharing & Permission**.
 - Lihat `docs/roadmap.md` untuk daftar fase & kriteria selesai.
 
 ## Slash command tersedia (lihat .claude/commands/)

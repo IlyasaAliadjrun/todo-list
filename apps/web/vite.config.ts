@@ -6,7 +6,7 @@ const API_TARGET = process.env.VITE_API_PROXY ?? "http://localhost:3001";
 const WEB_PORT = Number(process.env.WEB_PORT ?? 5173);
 
 // Semua prefix rute REST milik API di-proxy ke NestJS (same-origin → cookie mulus).
-const apiProxy = Object.fromEntries(
+const apiProxy: Record<string, string | { target: string; ws?: boolean }> = Object.fromEntries(
   [
     "/health",
     "/api",
@@ -20,6 +20,8 @@ const apiProxy = Object.fromEntries(
     "/uploads",
   ].map((p) => [p, API_TARGET]),
 );
+// WebSocket kolaborasi (Hocuspocus) — perlu upgrade ws.
+apiProxy["/collab"] = { target: API_TARGET, ws: true };
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -29,7 +31,9 @@ export default defineConfig({
       "@": fileURLToPath(new URL("./src", import.meta.url)),
       // Konsumsi paket internal dari SOURCE agar Vite/Rollup mengompilasi TS
       // langsung (menghindari masalah interop named-export CommonJS).
-      "@notion/shared": fileURLToPath(new URL("../../packages/shared/src/index.ts", import.meta.url)),
+      "@notion/shared": fileURLToPath(
+        new URL("../../packages/shared/src/index.ts", import.meta.url),
+      ),
     },
   },
   server: {

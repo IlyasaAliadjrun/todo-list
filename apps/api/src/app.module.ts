@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { AuthModule } from "./auth/auth.module";
+import { CollabModule } from "./collab/collab.module";
 import { DatabaseModule } from "./database/database.module";
 import { HealthModule } from "./health/health.module";
 import { PageModule } from "./page/page.module";
@@ -17,6 +18,7 @@ import { WorkspaceModule } from "./workspace/workspace.module";
     PageModule,
     DatabaseModule,
     StorageModule,
+    CollabModule,
     HealthModule,
   ],
 })

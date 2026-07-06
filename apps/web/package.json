@@ -27,7 +27,9 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@blocknote/core": "^0.25.1",
     "@blocknote/react": "^0.25.1",
-    "@blocknote/mantine": "^0.25.1"
+    "@blocknote/mantine": "^0.25.1",
+    "@hocuspocus/provider": "^2.15.2",
+    "yjs": "^13.6.20"
   },
   "devDependencies": {
     "@types/react": "^18.3.17",

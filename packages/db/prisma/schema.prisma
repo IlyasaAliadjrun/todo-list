@@ -124,6 +124,8 @@ model Page {
   icon        String?
   coverUrl    String?
   content     Json?
+  /// Snapshot biner dokumen Yjs (sumber kebenaran real-time, lihat ADR 0007).
+  yjsState    Bytes?
   order       String
   createdById String
   createdBy   User      @relation("PageAuthor", fields: [createdById], references: [id])

@@ -44,6 +44,12 @@ Dari Fase 4 (Database Sederhana):
 - Filter & sort tersimpan di server (kini client-side); pagination baris (Fase 8).
 - Hapus baris Database saat block database dihapus dari editor (kini objek yatim).
 
+Dari Fase 5 (Kolaborasi Real-time):
+- Refresh token WebSocket saat kadaluarsa + reconnect (kini token dibaca saat mount).
+- Seed atomik server-side (hindari race duplikasi saat 2 klien buka halaman lama).
+- Adapter Redis Hocuspocus untuk scaling multi-instance (Fase 8).
+- Comment threads real-time, riwayat versi, cursor chat.
+
 ## Definition of Done (berlaku semua fase)
 
 - Kriteria selesai fase terpenuhi.
