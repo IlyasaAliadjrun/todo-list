@@ -56,6 +56,11 @@ Dari Fase 6 (Sharing & Permission):
 - Share-link publik (view-only via token), berbagi ke user di luar workspace.
 - Permission granular per-block; audit log akses.
 
+Dari Fase 7 (Search, Favorites & Trash):
+- Search fuzzy/typo tolerance & multi-bahasa (kini config `simple` literal).
+- Search konten database/komentar; highlight in-page saat lompat dari palette.
+- Purge terjadwal untuk multi-instance (leader election) — Fase 8.
+
 ## Definition of Done (berlaku semua fase)
 
 - Kriteria selesai fase terpenuhi.

@@ -55,6 +55,7 @@ model User {
   memberships     WorkspaceMember[]
   sentInvitations WorkspaceInvitation[] @relation("InvitedBy")
   createdPages    Page[]               @relation("PageAuthor")
+  favorites       Favorite[]
 }
 
 /// Refresh-token session. Token disimpan HANYA sebagai hash; rotasi menandai
@@ -137,6 +138,10 @@ model Page {
   content     Json?
   /// Snapshot biner dokumen Yjs (sumber kebenaran real-time, lihat ADR 0007).
   yjsState    Bytes?
+  /// Teks polos hasil ekstraksi konten (untuk full-text search, lihat ADR 0009).
+  searchText  String    @default("")
+  /// tsvector (title + searchText) di-maintain oleh trigger; hanya lewat SQL raw.
+  searchVector Unsupported("tsvector")?
   order       String
   createdById String
   createdBy   User      @relation("PageAuthor", fields: [createdById], references: [id])
@@ -147,9 +152,23 @@ model Page {
 
   databases   Database[]
   permissions PagePermission[]
+  favorites   Favorite[]
 
   @@index([workspaceId, parentId, order])
   @@index([workspaceId, isArchived])
+  @@index([searchVector], type: Gin)
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, pageId])
+  @@index([userId])
 }
 
 /// Akses per halaman untuk seorang user atau seluruh workspace. Diwarisi ke

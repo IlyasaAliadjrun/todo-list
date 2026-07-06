@@ -1,12 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import type { UpdatePageInput } from "@notion/shared";
-import { Lock, Share2 } from "lucide-react";
+import { Lock, Share2, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 import { PageEditor } from "@/components/page/PageEditor";
 import { ShareDialog } from "@/components/page/ShareDialog";
 import { Button } from "@/components/ui/button";
+import { addFavorite, removeFavorite } from "@/lib/favorite.api";
 import { getPage, updatePage } from "@/lib/page.api";
+import { cn } from "@/lib/utils";
 
 export function PageDetail() {
   const params = useParams({ strict: false });
@@ -38,6 +40,15 @@ export function PageDetail() {
     },
   });
 
+  const favMut = useMutation({
+    mutationFn: (currentlyFav: boolean) =>
+      currentlyFav ? removeFavorite(pageId) : addFavorite(pageId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["page", pageId] });
+      void qc.invalidateQueries({ queryKey: ["favorites"] });
+    },
+  });
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Memuat…</p>;
   if (isError || !page) return <p className="text-sm text-destructive">Halaman tidak ditemukan.</p>;
 
@@ -66,6 +77,20 @@ export function PageDetail() {
               {page.myLevel === "VIEW" ? "Hanya lihat" : "Bisa komentar"}
             </span>
           )}
+          <button
+            type="button"
+            onClick={() => favMut.mutate(page.isFavorite)}
+            aria-label={page.isFavorite ? "Hapus dari favorit" : "Tambah ke favorit"}
+            title={page.isFavorite ? "Hapus dari favorit" : "Tambah ke favorit"}
+            className="flex h-9 w-9 items-center justify-center rounded-md border hover:bg-secondary"
+          >
+            <Star
+              className={cn(
+                "h-4 w-4",
+                page.isFavorite ? "fill-amber-400 text-amber-400" : "text-muted-foreground",
+              )}
+            />
+          </button>
           <Button size="sm" variant="outline" onClick={() => setShareOpen(true)}>
             <Share2 className="mr-1 h-3.5 w-3.5" /> Bagikan
           </Button>

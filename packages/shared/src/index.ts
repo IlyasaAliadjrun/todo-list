@@ -124,3 +124,9 @@ export type {
   PagePermissionEntry,
   PagePermissionsResponse,
 } from "./permission/permission";
+
+export { blockNoteToText, SearchResultSchema } from "./search/search";
+export type { SearchResult } from "./search/search";
+
+export { FavoritePageSchema, FavoriteStatusSchema } from "./favorite/favorite";
+export type { FavoritePage, FavoriteStatus } from "./favorite/favorite";

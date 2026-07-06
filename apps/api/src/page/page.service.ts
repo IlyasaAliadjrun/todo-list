@@ -1,13 +1,14 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import type {
-  CreatePageInput,
-  MovePageInput,
-  Page as PageDto,
-  PageContent,
-  PageDetail,
-  PermissionLevel,
-  PageTreeNode,
-  UpdatePageInput,
+import {
+  blockNoteToText,
+  type CreatePageInput,
+  type MovePageInput,
+  type Page as PageDto,
+  type PageContent,
+  type PageDetail,
+  type PermissionLevel,
+  type PageTreeNode,
+  type UpdatePageInput,
 } from "@notion/shared";
 import type { Prisma, Page as PageRow } from "@notion/db";
 import { generateKeyBetween } from "fractional-indexing";
@@ -37,12 +38,21 @@ export class PageService {
     };
   }
 
-  private toDetailDto(page: PageRow, myLevel: PermissionLevel): PageDetail {
+  private toDetailDto(page: PageRow, myLevel: PermissionLevel, isFavorite: boolean): PageDetail {
     return {
       ...this.toDto(page),
       content: (page.content as unknown as PageContent) ?? null,
       myLevel,
+      isFavorite,
     };
+  }
+
+  private async isFavorite(pageId: string, userId: string): Promise<boolean> {
+    const fav = await this.prisma.favorite.findUnique({
+      where: { userId_pageId: { userId, pageId } },
+      select: { id: true },
+    });
+    return fav !== null;
   }
 
   /** Keanggotaan workspace (untuk aksi level-workspace: buat root, tree, trash). */
@@ -69,17 +79,21 @@ export class PageService {
     const level = await this.permissions.requireLevel(id, userId, "VIEW");
     const page = await this.prisma.page.findUnique({ where: { id } });
     if (!page || page.isArchived) throw new NotFoundException("Halaman tidak ditemukan");
-    return this.toDetailDto(page, level);
+    return this.toDetailDto(page, level, await this.isFavorite(id, userId));
   }
 
-  /** Simpan konten dokumen (autosave). Butuh EDIT. Last-write-wins (ADR 0005). */
+  /** Simpan konten dokumen (autosave). Butuh EDIT. Last-write-wins (ADR 0005).
+   *  searchText di-update untuk full-text search (trigger maintain tsvector). */
   async updateContent(id: string, userId: string, content: PageContent): Promise<PageDetail> {
     const level = await this.permissions.requireLevel(id, userId, "EDIT");
     const page = await this.prisma.page.update({
       where: { id },
-      data: { content: content as unknown as Prisma.InputJsonValue },
+      data: {
+        content: content as unknown as Prisma.InputJsonValue,
+        searchText: blockNoteToText(content),
+      },
     });
-    return this.toDetailDto(page, level);
+    return this.toDetailDto(page, level, await this.isFavorite(id, userId));
   }
 
   async create(workspaceId: string, userId: string, input: CreatePageInput): Promise<PageDto> {

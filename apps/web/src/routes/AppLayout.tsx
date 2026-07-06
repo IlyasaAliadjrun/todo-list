@@ -1,6 +1,7 @@
 import { Outlet, useNavigate, useParams } from "@tanstack/react-router";
-import { Menu } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { useState } from "react";
+import { CommandPalette } from "@/components/CommandPalette";
 import { PageTree } from "@/components/page/PageTree";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,17 @@ export function AppLayout() {
           <WorkspaceSwitcher />
         </div>
         <div className="flex items-center gap-1 sm:gap-2">
-          <span className="hidden max-w-[40vw] truncate text-sm text-muted-foreground md:inline">
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
+            className="flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs text-muted-foreground hover:bg-secondary"
+            title="Cari (Ctrl/Cmd+K)"
+          >
+            <Search className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Cari</span>
+            <kbd className="hidden rounded bg-secondary px-1 text-[10px] sm:inline">⌘K</kbd>
+          </button>
+          <span className="hidden max-w-[30vw] truncate text-sm text-muted-foreground lg:inline">
             {user?.email}
           </span>
           <ThemeToggle />
@@ -48,6 +59,8 @@ export function AppLayout() {
           </Button>
         </div>
       </header>
+
+      <CommandPalette />
 
       <div className="flex min-h-0 flex-1">
         <aside

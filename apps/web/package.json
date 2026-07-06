@@ -29,7 +29,8 @@
     "@blocknote/react": "^0.25.1",
     "@blocknote/mantine": "^0.25.1",
     "@hocuspocus/provider": "^2.15.2",
-    "yjs": "^13.6.20"
+    "yjs": "^13.6.20",
+    "cmdk": "^1.0.4"
   },
   "devDependencies": {
     "@types/react": "^18.3.17",

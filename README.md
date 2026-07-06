@@ -3,7 +3,7 @@
 Aplikasi pencatatan berbasis **block editor** ala Notion (fitur inti) untuk pemakaian
 pribadi & tim. Monorepo scalable, robust, dan siap deploy.
 
-> **Status:** Fase 6 (Sharing & Permission) selesai. Roadmap lengkap di
+> **Status:** Fase 7 (Search, Favorites & Trash) selesai. Roadmap lengkap di
 > [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Stack

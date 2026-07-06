@@ -113,7 +113,12 @@ docker compose up -d      # nyalakan postgres, redis, minio
   default EDIT kompatibel Fase 2, OWNER/ADMIN bypass), enforcement di REST page/database
   (≥VIEW baca, ≥EDIT tulis) + koneksi Yjs (read-only bila <EDIT), `myLevel` di detail
   (lihat ADR 0008). Frontend: dialog Bagikan + editor/judul read-only per level.
-- Fase berikutnya: **Fase 7 — Search, Favorites & Trash**.
+- **Fase 7 (Search, Favorites & Trash) — SELESAI.** Full-text search Postgres
+  (`Page.searchText` + trigger `tsvector` + GIN, `ts_rank`/`ts_headline`, filter
+  permission), Favorites (`Favorite`, `isFavorite` di detail), auto-purge trash cron
+  (`@nestjs/schedule`, >30 hari) — lihat ADR 0009. Frontend: command palette Cmd/Ctrl+K
+  (`cmdk`), section Favorit di sidebar, tombol bintang.
+- Fase berikutnya: **Fase 8 — Hardening, Performa & Deploy**.
 - Lihat `docs/roadmap.md` untuk daftar fase & kriteria selesai.
 
 ## Slash command tersedia (lihat .claude/commands/)

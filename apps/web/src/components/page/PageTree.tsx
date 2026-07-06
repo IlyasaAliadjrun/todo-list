@@ -16,6 +16,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { archivePage, createPage, getPageTree, movePage, updatePage } from "@/lib/page.api";
+import { FavoritesSection } from "./FavoritesSection";
 import { SortableTreeRow } from "./SortableTreeRow";
 import { flattenTree, getProjection, removeDescendants, type Projection } from "./tree-utils";
 
@@ -110,6 +111,7 @@ export function PageTree({ workspaceId, selectedId, onNavigate }: Props) {
 
   return (
     <div className="flex h-full flex-col">
+      <FavoritesSection workspaceId={workspaceId} selectedId={selectedId} onNavigate={onNavigate} />
       <div className="mb-1 flex items-center justify-between px-1">
         <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Halaman
