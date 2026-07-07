@@ -77,21 +77,47 @@ export class MailService {
       </p>
     </div>`;
 
-    try {
-      await this.transporter.sendMail({
-        from: this.env.MAIL_FROM,
-        to: params.to,
-        subject,
-        text,
-        html,
-      });
-      this.logger.log(`Email undangan terkirim ke ${params.to}`);
-      return true;
-    } catch (err) {
-      this.logger.error(
-        `Gagal kirim email undangan ke ${params.to}: ${err instanceof Error ? err.message : String(err)}`,
-      );
-      return false;
+    const message = { from: this.env.MAIL_FROM, to: params.to, subject, text, html };
+
+    // Retry untuk kegagalan transient (blip DNS/jaringan sesaat, mis. queryA ETIMEOUT
+    // dari resolver terhadap stub systemd-resolved). 3 percobaan, backoff pendek.
+    const MAX_ATTEMPTS = 3;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        await this.transporter.sendMail(message);
+        this.logger.log(
+          `Email undangan terkirim ke ${params.to}${attempt > 1 ? ` (percobaan ke-${attempt})` : ""}`,
+        );
+        return true;
+      } catch (err) {
+        const transient = this.isTransient(err);
+        const detail = err instanceof Error ? err.message : String(err);
+        if (transient && attempt < MAX_ATTEMPTS) {
+          const delayMs = 300 * attempt; // 300ms, 600ms
+          this.logger.warn(
+            `Kirim email ke ${params.to} gagal transien (percobaan ${attempt}/${MAX_ATTEMPTS}): ${detail} — retry ${delayMs}ms`,
+          );
+          await new Promise((r) => setTimeout(r, delayMs));
+          continue;
+        }
+        this.logger.error(`Gagal kirim email undangan ke ${params.to}: ${detail}`);
+        return false;
+      }
     }
+    return false;
+  }
+
+  /** Error jaringan/DNS sesaat yang layak di-retry (bukan salah kredensial/alamat). */
+  private isTransient(err: unknown): boolean {
+    const code = (err as { code?: string })?.code ?? "";
+    return [
+      "ETIMEOUT",
+      "ETIMEDOUT",
+      "EAI_AGAIN",
+      "ECONNRESET",
+      "ECONNREFUSED",
+      "ESOCKET",
+      "EDNS",
+    ].includes(code);
   }
 }
