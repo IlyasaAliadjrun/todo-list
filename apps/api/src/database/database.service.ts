@@ -296,6 +296,22 @@ export class DatabaseService {
     return this.loadFull(databaseId);
   }
 
+  /** Ambil konten/catatan record (≥VIEW). */
+  async getRowContent(id: string, userId: string): Promise<{ content: unknown }> {
+    const row = await this.ownedRow(id, userId, "VIEW");
+    const full = await this.prisma.databaseRow.findUniqueOrThrow({
+      where: { id: row.id },
+      select: { content: true },
+    });
+    return { content: full.content ?? null };
+  }
+
+  /** Simpan konten/catatan record (≥EDIT). */
+  async setRowContent(id: string, userId: string, content: unknown): Promise<void> {
+    await this.ownedRow(id, userId, "EDIT");
+    await this.prisma.databaseRow.update({ where: { id }, data: { content: toJson(content) } });
+  }
+
   async deleteRow(id: string, userId: string): Promise<DatabaseDto> {
     const row = await this.ownedRow(id, userId);
     await this.prisma.databaseRow.delete({ where: { id } });

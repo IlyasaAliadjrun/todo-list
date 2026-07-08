@@ -103,6 +103,10 @@ export type MoveInput = z.infer<typeof MoveInputSchema>;
 export const UpdateCellInputSchema = z.object({ value: z.unknown() });
 export type UpdateCellInput = z.infer<typeof UpdateCellInputSchema>;
 
+/** Konten/catatan record (array block BlockNote), boleh null (kosong). */
+export const RowContentSchema = z.object({ content: z.array(z.unknown()).nullable() });
+export type RowContent = z.infer<typeof RowContentSchema>;
+
 /**
  * Normalisasi & validasi nilai sel sesuai tipe properti (fungsi murni).
  * Melempar Error dengan pesan bila tidak valid. Dipakai server (sumber kebenaran)

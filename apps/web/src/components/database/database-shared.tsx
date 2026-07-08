@@ -142,7 +142,7 @@ export function RecordCard({
   );
 
   return (
-    <div className="group/card relative rounded-md border bg-background p-2 text-sm shadow-sm">
+    <div className="group/card relative space-y-1.5 rounded-lg border bg-background p-2.5 text-sm shadow-sm transition-shadow hover:shadow-md">
       {cover ? (
         <img
           src={cover}
@@ -152,8 +152,8 @@ export function RecordCard({
         />
       ) : null}
       <div className="flex items-start justify-between gap-1">
-        <span className="min-w-0 flex-1 truncate font-medium">
-          {titleText || <span className="text-muted-foreground">Tanpa judul</span>}
+        <span className="min-w-0 flex-1 font-semibold leading-snug">
+          {titleText || <span className="font-normal text-muted-foreground">Tanpa judul</span>}
         </span>
         {onDelete && (
           <button

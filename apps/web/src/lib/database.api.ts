@@ -79,3 +79,15 @@ export function setCell(rowId: string, propertyId: string, value: unknown): Prom
     DatabaseSchema,
   );
 }
+
+export async function getRowContent(rowId: string): Promise<unknown[] | null> {
+  const res = await apiFetch<{ content: unknown }>(`/rows/${rowId}/content`);
+  return Array.isArray(res.content) ? (res.content as unknown[]) : null;
+}
+
+export function setRowContent(rowId: string, content: unknown[] | null): Promise<void> {
+  return apiFetch(`/rows/${rowId}/content`, {
+    method: "PUT",
+    body: JSON.stringify({ content }),
+  });
+}

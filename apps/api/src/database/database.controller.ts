@@ -15,6 +15,7 @@ import {
   CreateDatabaseInputSchema,
   CreatePropertyInputSchema,
   MoveInputSchema,
+  RowContentSchema,
   UpdateCellInputSchema,
   UpdateDatabaseInputSchema,
   UpdateDatabaseViewInputSchema,
@@ -23,6 +24,7 @@ import {
   type CreatePropertyInput,
   type Database,
   type MoveInput,
+  type RowContent,
   type UpdateCellInput,
   type UpdateDatabaseInput,
   type UpdateDatabaseViewInput,
@@ -131,6 +133,24 @@ export class DatabaseController {
   @Delete("rows/:id")
   deleteRow(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser): Promise<Database> {
     return this.db.deleteRow(id, user.id);
+  }
+
+  @Get("rows/:id/content")
+  getRowContent(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ content: unknown }> {
+    return this.db.getRowContent(id, user.id);
+  }
+
+  @Put("rows/:id/content")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  setRowContent(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(RowContentSchema)) dto: RowContent,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    return this.db.setRowContent(id, user.id, dto.content);
   }
 
   @Put("rows/:rowId/cells/:propertyId")

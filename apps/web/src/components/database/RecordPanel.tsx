@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { addProperty, deleteRow, setCell } from "@/lib/database.api";
 import { CellEditor } from "./CellEditor";
+import { RecordNotes } from "./RecordNotes";
 import { buildCellLookup, titleProperty } from "./database-shared";
 
 /**
@@ -47,9 +48,9 @@ export function RecordPanel({
         onClick={onClose}
         className="absolute inset-0 h-full w-full bg-black/30"
       />
-      <aside className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col overflow-y-auto border-l bg-background shadow-2xl">
-        <div className="flex items-center justify-between border-b px-3 py-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <aside className="absolute right-0 top-0 flex h-full w-full max-w-2xl flex-col overflow-y-auto border-l bg-background shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-4 py-2">
+          <span className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {db.title}
           </span>
           <button
@@ -62,7 +63,7 @@ export function RecordPanel({
           </button>
         </div>
 
-        <div className="space-y-3 p-4">
+        <div className="mx-auto w-full max-w-2xl space-y-4 px-8 py-6">
           {title && (
             <TitleInput
               key={rowId}
@@ -71,13 +72,13 @@ export function RecordPanel({
             />
           )}
 
-          <div className="space-y-1">
+          <div className="space-y-0.5">
             {others.map((p) => (
-              <div key={p.id} className="flex items-start gap-2 rounded px-1 py-1 hover:bg-muted/40">
-                <span className="mt-1 w-28 shrink-0 truncate text-xs text-muted-foreground">
+              <div key={p.id} className="flex items-start gap-3 rounded px-1 py-1 hover:bg-muted/40">
+                <span className="mt-1 w-32 shrink-0 truncate text-sm text-muted-foreground">
                   {p.name}
                 </span>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 text-sm">
                   <CellEditor
                     property={p}
                     value={cellOf(rowId, p.id)}
@@ -86,15 +87,19 @@ export function RecordPanel({
                 </div>
               </div>
             ))}
+            <button
+              type="button"
+              onClick={() => run(() => addProperty(db.id, {}))}
+              className="ml-1 mt-1 rounded px-1 py-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              + Tambah properti
+            </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => run(() => addProperty(db.id, {}))}
-            className="rounded px-1 py-1 text-xs text-muted-foreground hover:text-foreground"
-          >
-            + Tambah properti
-          </button>
+          <hr className="border-border" />
+
+          {/* Catatan/isi record (seperti halaman Notion) */}
+          <RecordNotes rowId={rowId} />
 
           <div className="border-t pt-3">
             <button

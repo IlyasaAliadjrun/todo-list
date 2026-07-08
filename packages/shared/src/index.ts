@@ -90,6 +90,7 @@ export {
   UpdatePropertyInputSchema,
   MoveInputSchema,
   UpdateCellInputSchema,
+  RowContentSchema,
   normalizeCellValue,
 } from "./database/database";
 export { groupRowsByOption, bucketRowsByDate, dateKeyOf } from "./database/views";
@@ -109,6 +110,7 @@ export type {
   UpdatePropertyInput,
   MoveInput,
   UpdateCellInput,
+  RowContent,
 } from "./database/database";
 
 export {

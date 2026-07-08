@@ -240,6 +240,8 @@ model DatabaseRow {
   databaseId String
   database   Database @relation(fields: [databaseId], references: [id], onDelete: Cascade)
   order      String
+  /// Catatan/isi record (BlockNote JSON) — seperti halaman Notion per baris.
+  content    Json?
   createdAt  DateTime @default(now())
 
   cells CellValue[]
