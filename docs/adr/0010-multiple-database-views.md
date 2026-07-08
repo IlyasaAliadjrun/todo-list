@@ -47,6 +47,22 @@ konsisten untuk semua anggota workspace.
    `RecordCard`) diekstrak ke `database-shared.tsx`. Logika pengelompokan Board
    (`groupRowsByOption`) fungsi murni → diuji unit.
 
+## Adendum (feedback UX)
+
+- **UI hanya Tabel + Board.** Setelah dipakai, Gallery & Calendar dinilai kurang sesuai
+  kebutuhan inti dan membuat switcher ramai → **ditunda dari UI** (komponennya dihapus).
+  Enum `DatabaseViewType` tetap menyimpan GALLERY/CALENDAR (kompat data); container
+  memperlakukan nilai non-BOARD sebagai Tabel. Helper `bucketRowsByDate`/`dateKeyOf` tetap
+  di shared (teruji) untuk dipakai lagi bila Calendar diaktifkan.
+- **RecordPanel (peek ala Notion).** Klik kartu Board atau tombol "buka" pada baris Tabel
+  membuka panel kanan (portal ke body, backdrop, Escape) untuk mengedit **semua** properti
+  satu record via `CellEditor` yang sama. Di Board, klik dibedakan dari drag lewat flag
+  `draggingRef` (di-set `onDragStart`, di-reset setelah `onDragEnd`).
+- **FloatingMenu (portal).** Menu setelan kolom & dropdown multi-select dulu absolut di dalam
+  `overflow-x-auto` tabel → **ter-clip** (tak bisa pilih tipe). Kini dirender via portal ke
+  `body` (fixed) sehingga tampil penuh & lepas dari contentEditable BlockNote. Opsi SELECT
+  kini punya **pemilih warna** (titik warna, siklus saat diklik; opsi baru auto-warna).
+
 ## Konsekuensi
 
 - View & konfigurasinya persist lintas sesi/anggota (disimpan di DB).

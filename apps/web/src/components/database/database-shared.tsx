@@ -158,7 +158,10 @@ export function RecordCard({
         {onDelete && (
           <button
             type="button"
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             className="shrink-0 text-xs text-muted-foreground opacity-0 hover:text-destructive group-hover/card:opacity-100"
             aria-label="Hapus baris"
             title="Hapus baris"

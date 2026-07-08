@@ -10,6 +10,7 @@ import {
 import type { Database, DatabaseProperty } from "@notion/shared";
 import { groupRowsByOption } from "@notion/shared";
 import { Plus } from "lucide-react";
+import { useRef } from "react";
 import { addRow, deleteRow, setCell } from "@/lib/database.api";
 import { RecordCard, optionBadgeClass } from "./database-shared";
 
@@ -17,9 +18,11 @@ const NULL_COL = "__none__";
 
 function DraggableCard({
   id,
+  onClick,
   children,
 }: {
   id: string;
+  onClick: () => void;
   children: React.ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
@@ -28,10 +31,11 @@ function DraggableCard({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      onClick={onClick}
       style={
         transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined
       }
-      className={isDragging ? "opacity-50" : ""}
+      className={`cursor-pointer ${isDragging ? "opacity-50" : ""}`}
     >
       {children}
     </div>
@@ -90,13 +94,17 @@ export function BoardView({
   run,
   groupByProperty,
   cellOf,
+  onOpenRow,
 }: {
   db: Database;
   run: (thunk: () => Promise<Database>) => void;
   groupByProperty: DatabaseProperty | null;
   cellOf: (rowId: string, propId: string) => unknown;
+  onOpenRow: (rowId: string) => void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  // Bedakan klik (buka panel) dari drag: set saat drag mulai, klik pasca-drag diabaikan.
+  const draggingRef = useRef(false);
 
   if (!groupByProperty) {
     return (
@@ -121,6 +129,7 @@ export function BoardView({
   }
 
   function onDragEnd(e: DragEndEvent) {
+    setTimeout(() => (draggingRef.current = false), 0); // reset setelah event klik pasca-drop
     const rowId = String(e.active.id);
     const overId = e.over ? String(e.over.id) : null;
     if (!overId) return;
@@ -131,6 +140,11 @@ export function BoardView({
     run(() => setCell(rowId, groupById, targetOption));
   }
 
+  function openIfClick(rowId: string) {
+    if (draggingRef.current) return; // ini akhir dari drag, bukan klik murni
+    onOpenRow(rowId);
+  }
+
   const labelOf = (optionId: string | null): { text: string; color?: string } => {
     if (optionId === null) return { text: `Tanpa ${groupByProperty.name}` };
     const opt = groupByProperty.options.find((o) => o.id === optionId);
@@ -138,7 +152,11 @@ export function BoardView({
   };
 
   return (
-    <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+    <DndContext
+      sensors={sensors}
+      onDragStart={() => (draggingRef.current = true)}
+      onDragEnd={onDragEnd}
+    >
       <div className="flex gap-3 overflow-x-auto p-3">
         {columns.map((col) => {
           const { text, color } = labelOf(col.optionId);
@@ -153,7 +171,7 @@ export function BoardView({
               onAdd={() => run(() => addCardTo(col.optionId))}
             >
               {col.rowIds.map((rowId) => (
-                <DraggableCard key={rowId} id={rowId}>
+                <DraggableCard key={rowId} id={rowId} onClick={() => openIfClick(rowId)}>
                   <RecordCard
                     db={db}
                     rowId={rowId}

@@ -1,33 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Database, DatabaseProperty, DatabaseViewType } from "@notion/shared";
-import { CalendarDays, Columns3, LayoutGrid, Table2 } from "lucide-react";
+import { Columns3, Table2 } from "lucide-react";
+import { useState } from "react";
 import { getDatabase, updateDatabaseView } from "@/lib/database.api";
 import { buildCellLookup } from "./database-shared";
 import { TableView } from "./TableView";
 import { BoardView } from "./BoardView";
-import { GalleryView } from "./GalleryView";
-import { CalendarView } from "./CalendarView";
+import { RecordPanel } from "./RecordPanel";
 
 const VIEWS: { type: DatabaseViewType; label: string; Icon: typeof Table2 }[] = [
-  { type: "TABLE", label: "Table", Icon: Table2 },
+  { type: "TABLE", label: "Tabel", Icon: Table2 },
   { type: "BOARD", label: "Board", Icon: Columns3 },
-  { type: "GALLERY", label: "Gallery", Icon: LayoutGrid },
-  { type: "CALENDAR", label: "Calendar", Icon: CalendarDays },
 ];
 
-/** Resolusi properti config: pakai id tersimpan bila valid & bertipe cocok, else fallback ke properti pertama bertipe itu. */
-function resolveProp(
-  db: Database,
-  storedId: string | null,
-  types: DatabaseProperty["type"][],
-): DatabaseProperty | null {
-  const stored = db.properties.find((p) => p.id === storedId && types.includes(p.type));
+/** Properti group-by Board: id tersimpan bila valid SELECT, else SELECT pertama. */
+function resolveGroupBy(db: Database, storedId: string | null): DatabaseProperty | null {
+  const stored = db.properties.find((p) => p.id === storedId && p.type === "SELECT");
   if (stored) return stored;
-  return db.properties.find((p) => types.includes(p.type)) ?? null;
+  return db.properties.find((p) => p.type === "SELECT") ?? null;
 }
 
 export function DatabaseView({ databaseId }: { databaseId: string }) {
   const qc = useQueryClient();
+  const [openRowId, setOpenRowId] = useState<string | null>(null);
   const {
     data: db,
     isLoading,
@@ -54,44 +49,38 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
 
   const cellOf = buildCellLookup(db);
   const selectProps = db.properties.filter((p) => p.type === "SELECT");
-  const dateProps = db.properties.filter((p) => p.type === "DATE");
-  const urlProps = db.properties.filter((p) => p.type === "URL");
-  const groupByProperty = resolveProp(db, db.groupByPropertyId, ["SELECT"]);
-  const dateProperty = resolveProp(db, db.datePropertyId, ["DATE"]);
-  const coverProperty = resolveProp(db, db.coverPropertyId, ["URL"]);
-
-  const selectCls =
-    "h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground";
+  const groupByProperty = resolveGroupBy(db, db.groupByPropertyId);
+  // Hanya TABLE & BOARD didukung; nilai lain (mis. lama) → tampilkan sebagai Board bila diminta, else Tabel.
+  const activeView: DatabaseViewType = db.viewType === "BOARD" ? "BOARD" : "TABLE";
 
   return (
     <div className="my-2 rounded-lg border bg-card" contentEditable={false}>
       <div className="flex flex-wrap items-center gap-2 border-b p-2">
         <span className="mr-1 truncate text-sm font-semibold">{db.title}</span>
 
-        {/* Switcher view */}
         <div className="flex items-center gap-0.5 rounded-md bg-muted/60 p-0.5">
           {VIEWS.map(({ type, label, Icon }) => (
             <button
               key={type}
               type="button"
               onClick={() => {
-                if (type !== db.viewType) run(() => updateDatabaseView(databaseId, { viewType: type }));
+                if (type !== activeView)
+                  run(() => updateDatabaseView(databaseId, { viewType: type }));
               }}
               className={`flex items-center gap-1 rounded px-2 py-1 text-xs ${
-                db.viewType === type
+                activeView === type
                   ? "bg-background font-medium text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               title={label}
             >
               <Icon className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{label}</span>
+              <span>{label}</span>
             </button>
           ))}
         </div>
 
-        {/* Selector konfigurasi per view */}
-        {db.viewType === "BOARD" && selectProps.length > 0 && (
+        {activeView === "BOARD" && selectProps.length > 0 && (
           <label className="flex items-center gap-1 text-xs text-muted-foreground">
             Kelompokkan
             <select
@@ -99,7 +88,7 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
               onChange={(e) =>
                 run(() => updateDatabaseView(databaseId, { groupByPropertyId: e.target.value }))
               }
-              className={selectCls}
+              className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground"
             >
               {selectProps.map((p) => (
                 <option key={p.id} value={p.id}>
@@ -109,56 +98,23 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
             </select>
           </label>
         )}
-        {db.viewType === "CALENDAR" && dateProps.length > 0 && (
-          <label className="flex items-center gap-1 text-xs text-muted-foreground">
-            Tanggal
-            <select
-              value={dateProperty?.id ?? ""}
-              onChange={(e) =>
-                run(() => updateDatabaseView(databaseId, { datePropertyId: e.target.value }))
-              }
-              className={selectCls}
-            >
-              {dateProps.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        {db.viewType === "GALLERY" && urlProps.length > 0 && (
-          <label className="flex items-center gap-1 text-xs text-muted-foreground">
-            Sampul
-            <select
-              value={coverProperty?.id ?? ""}
-              onChange={(e) =>
-                run(() =>
-                  updateDatabaseView(databaseId, { coverPropertyId: e.target.value || null }),
-                )
-              }
-              className={selectCls}
-            >
-              <option value="">Tanpa</option>
-              {urlProps.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
       </div>
 
-      {db.viewType === "TABLE" && <TableView db={db} run={run} />}
-      {db.viewType === "BOARD" && (
-        <BoardView db={db} run={run} groupByProperty={groupByProperty} cellOf={cellOf} />
+      {activeView === "TABLE" && (
+        <TableView db={db} run={run} onOpenRow={(id) => setOpenRowId(id)} />
       )}
-      {db.viewType === "GALLERY" && (
-        <GalleryView db={db} run={run} coverProperty={coverProperty} cellOf={cellOf} />
+      {activeView === "BOARD" && (
+        <BoardView
+          db={db}
+          run={run}
+          groupByProperty={groupByProperty}
+          cellOf={cellOf}
+          onOpenRow={(id) => setOpenRowId(id)}
+        />
       )}
-      {db.viewType === "CALENDAR" && (
-        <CalendarView db={db} run={run} dateProperty={dateProperty} cellOf={cellOf} />
+
+      {openRowId && (
+        <RecordPanel db={db} rowId={openRowId} run={run} onClose={() => setOpenRowId(null)} />
       )}
     </div>
   );

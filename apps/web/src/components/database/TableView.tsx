@@ -1,11 +1,10 @@
 import type { Database, DatabaseProperty, PropertyType } from "@notion/shared";
-import { ArrowLeft, ArrowRight, ChevronDown, Plus, Settings2, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, Maximize2, Plus, Settings2, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import {
   addProperty,
   addRow,
   deleteProperty,
-  deleteRow,
   moveProperty,
   setCell,
   updateProperty,
@@ -236,9 +235,11 @@ function PropertyHeader({
 export function TableView({
   db,
   run,
+  onOpenRow,
 }: {
   db: Database;
   run: (thunk: () => Promise<Database>) => void;
+  onOpenRow: (rowId: string) => void;
 }) {
   const [sort, setSort] = useState<{ propertyId: string; dir: "asc" | "desc" } | null>(null);
   const [filter, setFilter] = useState("");
@@ -322,11 +323,12 @@ export function TableView({
                 <td className="border-b border-r text-center align-middle">
                   <button
                     type="button"
-                    onClick={() => run(() => deleteRow(row.id))}
-                    className="text-muted-foreground opacity-0 hover:text-destructive group-hover:opacity-100"
-                    aria-label="Hapus baris"
+                    onClick={() => onOpenRow(row.id)}
+                    className="text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
+                    aria-label="Buka record"
+                    title="Buka"
                   >
-                    <Trash2 className="mx-auto h-3.5 w-3.5" />
+                    <Maximize2 className="mx-auto h-3.5 w-3.5" />
                   </button>
                 </td>
                 {db.properties.map((p) => (
