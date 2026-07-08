@@ -77,6 +77,7 @@ export type { PresignUploadInput, PresignUploadResponse } from "./storage/upload
 
 export {
   PropertyTypeSchema,
+  DatabaseViewTypeSchema,
   SelectOptionSchema,
   DatabasePropertySchema,
   DatabaseRowSchema,
@@ -84,14 +85,18 @@ export {
   DatabaseSchema,
   CreateDatabaseInputSchema,
   UpdateDatabaseInputSchema,
+  UpdateDatabaseViewInputSchema,
   CreatePropertyInputSchema,
   UpdatePropertyInputSchema,
   MoveInputSchema,
   UpdateCellInputSchema,
   normalizeCellValue,
 } from "./database/database";
+export { groupRowsByOption, bucketRowsByDate, dateKeyOf } from "./database/views";
+export type { CellLookup, BoardColumn } from "./database/views";
 export type {
   PropertyType,
+  DatabaseViewType,
   SelectOption,
   DatabaseProperty,
   DatabaseRow,
@@ -99,6 +104,7 @@ export type {
   Database,
   CreateDatabaseInput,
   UpdateDatabaseInput,
+  UpdateDatabaseViewInput,
   CreatePropertyInput,
   UpdatePropertyInput,
   MoveInput,

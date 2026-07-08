@@ -3,6 +3,7 @@ import {
   type CreateDatabaseInput,
   type CreatePropertyInput,
   type Database,
+  type UpdateDatabaseViewInput,
   type UpdatePropertyInput,
 } from "@notion/shared";
 import { apiFetch } from "@/lib/http";
@@ -25,6 +26,14 @@ export function updateDatabase(id: string, title: string): Promise<Database> {
 
 export function deleteDatabase(id: string): Promise<void> {
   return apiFetch(`/databases/${id}`, { method: "DELETE" });
+}
+
+export function updateDatabaseView(id: string, input: UpdateDatabaseViewInput): Promise<Database> {
+  return apiFetch(
+    `/databases/${id}/view`,
+    { method: "PATCH", body: JSON.stringify(input) },
+    DatabaseSchema,
+  );
 }
 
 export function addProperty(databaseId: string, input: CreatePropertyInput): Promise<Database> {

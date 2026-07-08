@@ -6,6 +6,7 @@ import {
   type DatabaseProperty as PropertyDto,
   type PermissionLevel,
   type SelectOption,
+  type UpdateDatabaseViewInput,
   type UpdatePropertyInput,
 } from "@notion/shared";
 import { Prisma } from "@notion/db";
@@ -107,6 +108,10 @@ export class DatabaseService {
       workspaceId: db.workspaceId,
       pageId: db.pageId,
       title: db.title,
+      viewType: db.viewType,
+      groupByPropertyId: db.groupByPropertyId,
+      datePropertyId: db.datePropertyId,
+      coverPropertyId: db.coverPropertyId,
       properties,
       rows: db.rows.map((r) => ({ id: r.id, databaseId: r.databaseId, order: r.order })),
       cells,
@@ -152,6 +157,44 @@ export class DatabaseService {
   async updateDatabase(id: string, userId: string, title: string): Promise<DatabaseDto> {
     await this.ownedDatabase(id, userId);
     await this.prisma.database.update({ where: { id }, data: { title: title.trim() } });
+    return this.loadFull(id);
+  }
+
+  /** Ubah view aktif + properti konfigurasinya (butuh EDIT). Referensi divalidasi. */
+  async updateView(
+    id: string,
+    userId: string,
+    input: UpdateDatabaseViewInput,
+  ): Promise<DatabaseDto> {
+    await this.ownedDatabase(id, userId);
+    const props = await this.prisma.databaseProperty.findMany({
+      where: { databaseId: id },
+      select: { id: true, type: true },
+    });
+
+    // Validasi soft-ref: id (bila non-null) harus milik database & bertipe sesuai.
+    const requireProp = (propId: string | null | undefined, type: PropertyDto["type"], label: string) => {
+      if (propId == null) return;
+      const p = props.find((x) => x.id === propId);
+      if (!p) throw new BadRequestException(`Properti ${label} tidak ditemukan di database ini`);
+      if (p.type !== type)
+        throw new BadRequestException(`Properti ${label} harus bertipe ${type}`);
+    };
+    requireProp(input.groupByPropertyId, "SELECT", "group-by (Board)");
+    requireProp(input.datePropertyId, "DATE", "tanggal (Calendar)");
+    requireProp(input.coverPropertyId, "URL", "sampul (Gallery)");
+
+    await this.prisma.database.update({
+      where: { id },
+      data: {
+        ...(input.viewType !== undefined ? { viewType: input.viewType } : {}),
+        ...(input.groupByPropertyId !== undefined
+          ? { groupByPropertyId: input.groupByPropertyId }
+          : {}),
+        ...(input.datePropertyId !== undefined ? { datePropertyId: input.datePropertyId } : {}),
+        ...(input.coverPropertyId !== undefined ? { coverPropertyId: input.coverPropertyId } : {}),
+      },
+    });
     return this.loadFull(id);
   }
 

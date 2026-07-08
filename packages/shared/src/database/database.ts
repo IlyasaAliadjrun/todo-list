@@ -11,6 +11,9 @@ export const PropertyTypeSchema = z.enum([
 ]);
 export type PropertyType = z.infer<typeof PropertyTypeSchema>;
 
+export const DatabaseViewTypeSchema = z.enum(["TABLE", "BOARD", "GALLERY", "CALENDAR"]);
+export type DatabaseViewType = z.infer<typeof DatabaseViewTypeSchema>;
+
 export const SelectOptionSchema = z.object({
   id: z.string(),
   name: z.string().trim().min(1).max(60),
@@ -48,6 +51,10 @@ export const DatabaseSchema = z.object({
   workspaceId: z.string(),
   pageId: z.string().nullable(),
   title: z.string(),
+  viewType: DatabaseViewTypeSchema,
+  groupByPropertyId: z.string().nullable(),
+  datePropertyId: z.string().nullable(),
+  coverPropertyId: z.string().nullable(),
   properties: z.array(DatabasePropertySchema),
   rows: z.array(DatabaseRowSchema),
   cells: z.array(CellValueSchema),
@@ -63,6 +70,17 @@ export type CreateDatabaseInput = z.infer<typeof CreateDatabaseInputSchema>;
 
 export const UpdateDatabaseInputSchema = z.object({ title: z.string().trim().min(1).max(120) });
 export type UpdateDatabaseInput = z.infer<typeof UpdateDatabaseInputSchema>;
+
+/** Ubah view aktif & properti konfigurasinya. `null` = kosongkan referensi. */
+export const UpdateDatabaseViewInputSchema = z
+  .object({
+    viewType: DatabaseViewTypeSchema.optional(),
+    groupByPropertyId: z.string().nullable().optional(),
+    datePropertyId: z.string().nullable().optional(),
+    coverPropertyId: z.string().nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "Tidak ada perubahan" });
+export type UpdateDatabaseViewInput = z.infer<typeof UpdateDatabaseViewInputSchema>;
 
 export const CreatePropertyInputSchema = z.object({
   name: z.string().trim().min(1).max(60).optional(),

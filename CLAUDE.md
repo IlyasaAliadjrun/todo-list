@@ -125,6 +125,13 @@ docker compose up -d      # nyalakan postgres, redis, minio
   migrate. E2E Playwright (alur inti) + CI GitHub Actions (quality + e2e). Lihat
   `docs/deployment.md`.
 - **v1 SELESAI.** Backlog fase 9+ ada di `docs/roadmap.md`.
+- **Fase 9 (Multiple database views) — SELESAI.** View aktif per-database di-persist
+  (`Database.viewType` + `groupBy/date/coverPropertyId`, lihat ADR 0010): **Board** (Kanban,
+  group-by SELECT, drag antar kolom via @dnd-kit → `setCell`), **Gallery** (grid kartu +
+  sampul URL opsional), **Calendar** (grid bulanan by properti DATE, +tambah baris per hari).
+  Endpoint `PATCH /databases/:id/view` (≥EDIT, validasi tipe properti). Frontend: `DatabaseView`
+  jadi container (switcher + selector konfigurasi) → `TableView`/`BoardView`/`GalleryView`/
+  `CalendarView` + `RecordCard`. Helper murni `groupRowsByOption`/`bucketRowsByDate` (shared, diuji).
 
 ## Slash command tersedia (lihat .claude/commands/)
 

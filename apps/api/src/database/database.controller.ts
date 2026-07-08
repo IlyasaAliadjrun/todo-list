@@ -17,6 +17,7 @@ import {
   MoveInputSchema,
   UpdateCellInputSchema,
   UpdateDatabaseInputSchema,
+  UpdateDatabaseViewInputSchema,
   UpdatePropertyInputSchema,
   type CreateDatabaseInput,
   type CreatePropertyInput,
@@ -24,6 +25,7 @@ import {
   type MoveInput,
   type UpdateCellInput,
   type UpdateDatabaseInput,
+  type UpdateDatabaseViewInput,
   type UpdatePropertyInput,
 } from "@notion/shared";
 import { AuthenticatedUser } from "../auth/auth.constants";
@@ -57,6 +59,15 @@ export class DatabaseController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<Database> {
     return this.db.updateDatabase(id, user.id, dto.title);
+  }
+
+  @Patch("databases/:id/view")
+  updateView(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(UpdateDatabaseViewInputSchema)) dto: UpdateDatabaseViewInput,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<Database> {
+    return this.db.updateView(id, user.id, dto);
   }
 
   @Delete("databases/:id")

@@ -40,7 +40,9 @@ Dari Fase 3 (Block Editor):
 - Kuota/limit upload per workspace, embed file non-gambar, cover image.
 
 Dari Fase 4 (Database Sederhana):
-- Relation, rollup, formula; view lain (board/calendar/timeline); grouping.
+- Relation, rollup, formula. View Board/Gallery/Calendar + grouping → **SELESAI Fase 9**
+  (ADR 0010). Sisa: Timeline, multi-view bertab tersimpan, group-by MULTI_SELECT,
+  drag ubah tanggal di Calendar.
 - Filter & sort tersimpan di server (kini client-side); pagination baris (Fase 8).
 - Hapus baris Database saat block database dihapus dari editor (kini objek yatim).
 

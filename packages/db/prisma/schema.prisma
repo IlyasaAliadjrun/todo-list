@@ -32,6 +32,13 @@ enum PropertyType {
   URL
 }
 
+enum DatabaseViewType {
+  TABLE
+  BOARD
+  GALLERY
+  CALENDAR
+}
+
 enum PermissionLevel {
   VIEW
   COMMENT
@@ -196,6 +203,12 @@ model Database {
   pageId      String?
   page        Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   title       String    @default("Untitled")
+  /// View aktif & konfigurasinya (lihat ADR 0010). *PropertyId = soft ref ke
+  /// DatabaseProperty (divalidasi saat set, fallback aman saat render).
+  viewType          DatabaseViewType @default(TABLE)
+  groupByPropertyId String?
+  datePropertyId    String?
+  coverPropertyId   String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
