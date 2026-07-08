@@ -11,7 +11,8 @@ import {
   updateProperty,
 } from "@/lib/database.api";
 import { CellEditor } from "./CellEditor";
-import { TYPE_LABELS, buildCellLookup, displayText } from "./database-shared";
+import { FloatingMenu } from "./FloatingMenu";
+import { OPTION_COLORS, TYPE_LABELS, buildCellLookup, displayText, swatchClass } from "./database-shared";
 
 const TYPES = Object.keys(TYPE_LABELS) as PropertyType[];
 
@@ -88,11 +89,14 @@ function PropertyHeader({
           </button>
         )}
 
-        <details className="relative shrink-0">
-          <summary className="flex h-6 w-6 cursor-pointer list-none items-center justify-center rounded text-muted-foreground hover:bg-secondary hover:text-foreground">
-            <Settings2 className="h-3.5 w-3.5" />
-          </summary>
-          <div className="absolute right-0 z-30 mt-1 w-56 space-y-2 rounded-md border bg-background p-2 text-sm shadow-md">
+        <FloatingMenu
+          ariaLabel="Setelan kolom"
+          width={224}
+          triggerClassName="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded text-muted-foreground hover:bg-secondary hover:text-foreground"
+          trigger={<Settings2 className="h-3.5 w-3.5" />}
+        >
+          {() => (
+            <div className="space-y-2">
             <label className="block">
               <span className="mb-1 block text-xs text-muted-foreground">Tipe</span>
               <select
@@ -112,14 +116,35 @@ function PropertyHeader({
 
             {isSelectType && (
               <div>
-                <span className="mb-1 block text-xs text-muted-foreground">Opsi</span>
+                <span className="mb-1 block text-xs text-muted-foreground">
+                  Opsi (klik titik untuk ganti warna)
+                </span>
                 <div className="space-y-1">
                   {property.options.map((o) => (
                     <div
                       key={o.id}
-                      className="flex items-center justify-between rounded bg-secondary px-1.5 py-0.5"
+                      className="flex items-center gap-1.5 rounded bg-secondary px-1.5 py-0.5"
                     >
-                      <span className="truncate text-xs">{o.name}</span>
+                      <button
+                        type="button"
+                        aria-label="Ganti warna"
+                        title="Ganti warna"
+                        onClick={() => {
+                          const cur = OPTION_COLORS.indexOf(
+                            (o.color as (typeof OPTION_COLORS)[number]) ?? "gray",
+                          );
+                          const next = OPTION_COLORS[(cur + 1) % OPTION_COLORS.length];
+                          run(() =>
+                            updateProperty(property.id, {
+                              options: property.options.map((x) =>
+                                x.id === o.id ? { ...x, color: next } : x,
+                              ),
+                            }),
+                          );
+                        }}
+                        className={`h-3 w-3 shrink-0 rounded-full ${swatchClass(o.color)}`}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-xs">{o.name}</span>
                       <button
                         type="button"
                         onClick={() =>
@@ -144,9 +169,10 @@ function PropertyHeader({
                     const label = optionDraft.trim();
                     if (!label) return;
                     setOptionDraft("");
+                    const color = OPTION_COLORS[property.options.length % OPTION_COLORS.length];
                     run(() =>
                       updateProperty(property.id, {
-                        options: [...property.options, { id: newOptionId(), name: label }],
+                        options: [...property.options, { id: newOptionId(), name: label, color }],
                       }),
                     );
                   }}
@@ -199,8 +225,9 @@ function PropertyHeader({
                 <Trash2 className="h-3.5 w-3.5" /> Hapus kolom
               </button>
             </div>
-          </div>
-        </details>
+            </div>
+          )}
+        </FloatingMenu>
       </div>
     </th>
   );

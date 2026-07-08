@@ -50,6 +50,36 @@ export function optionBadgeClass(color?: string): string {
   return (color && COLOR_CLASSES[color]) || "bg-secondary text-secondary-foreground";
 }
 
+/** Daftar warna opsi yang bisa dipilih (urutan untuk auto-assign & siklus). */
+export const OPTION_COLORS = [
+  "gray",
+  "brown",
+  "orange",
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+  "pink",
+  "red",
+] as const;
+
+const SWATCH_CLASSES: Record<string, string> = {
+  gray: "bg-neutral-400",
+  brown: "bg-amber-700",
+  orange: "bg-orange-500",
+  yellow: "bg-yellow-400",
+  green: "bg-green-500",
+  blue: "bg-blue-500",
+  purple: "bg-purple-500",
+  pink: "bg-pink-500",
+  red: "bg-red-500",
+};
+
+/** Kelas latar untuk titik warna (swatch) di editor opsi. */
+export function swatchClass(color?: string): string {
+  return (color && SWATCH_CLASSES[color]) || "bg-neutral-400";
+}
+
 /** Badge berwarna untuk nilai SELECT/MULTI_SELECT sebuah baris. */
 export function OptionBadges({
   property,

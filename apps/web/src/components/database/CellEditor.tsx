@@ -1,5 +1,7 @@
 import type { DatabaseProperty, PropertyType } from "@notion/shared";
 import { useEffect, useState } from "react";
+import { FloatingMenu } from "./FloatingMenu";
+import { optionBadgeClass } from "./database-shared";
 
 interface Props {
   property: DatabaseProperty;
@@ -50,42 +52,54 @@ function MultiSelectCell({
 }) {
   const selected = new Set(value);
   return (
-    <details className="relative">
-      <summary className="flex min-h-5 cursor-pointer list-none flex-wrap items-center gap-1">
-        {value.length === 0 ? (
+    <FloatingMenu
+      ariaLabel="Pilih opsi"
+      width={180}
+      triggerClassName="flex min-h-5 w-full cursor-pointer flex-wrap items-center gap-1 text-left"
+      trigger={
+        value.length === 0 ? (
           <span className="text-muted-foreground">—</span>
         ) : (
-          value.map((id) => (
-            <span key={id} className="rounded bg-secondary px-1.5 text-xs">
-              {property.options.find((o) => o.id === id)?.name ?? id}
-            </span>
-          ))
-        )}
-      </summary>
-      <div className="absolute z-20 mt-1 w-44 rounded-md border bg-background p-1 shadow-md">
-        {property.options.length === 0 && (
-          <p className="px-1 py-0.5 text-xs text-muted-foreground">Belum ada opsi</p>
-        )}
-        {property.options.map((o) => (
-          <label
-            key={o.id}
-            className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-sm hover:bg-secondary"
-          >
-            <input
-              type="checkbox"
-              checked={selected.has(o.id)}
-              onChange={(e) => {
-                const next = new Set(selected);
-                if (e.target.checked) next.add(o.id);
-                else next.delete(o.id);
-                onCommit([...next]);
-              }}
-            />
-            {o.name}
-          </label>
-        ))}
-      </div>
-    </details>
+          value.map((id) => {
+            const o = property.options.find((x) => x.id === id);
+            return (
+              <span
+                key={id}
+                className={`rounded px-1.5 text-xs ${optionBadgeClass(o?.color)}`}
+              >
+                {o?.name ?? id}
+              </span>
+            );
+          })
+        )
+      }
+    >
+      {() => (
+        <>
+          {property.options.length === 0 && (
+            <p className="px-1 py-0.5 text-xs text-muted-foreground">Belum ada opsi</p>
+          )}
+          {property.options.map((o) => (
+            <label
+              key={o.id}
+              className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-sm hover:bg-secondary"
+            >
+              <input
+                type="checkbox"
+                checked={selected.has(o.id)}
+                onChange={(e) => {
+                  const next = new Set(selected);
+                  if (e.target.checked) next.add(o.id);
+                  else next.delete(o.id);
+                  onCommit([...next]);
+                }}
+              />
+              {o.name}
+            </label>
+          ))}
+        </>
+      )}
+    </FloatingMenu>
   );
 }
 
