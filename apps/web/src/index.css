@@ -9,6 +9,10 @@
   padding-inline: 0 !important;
 }
 
+.bn-block-content {
+  padding: 0 5px 5px 5px !important;
+}
+
 /* Token warna gaya shadcn/ui (slate). Dark mode via class .dark. */
 @layer base {
   :root {
