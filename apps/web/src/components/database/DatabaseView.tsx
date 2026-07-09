@@ -54,7 +54,7 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
   const activeView: DatabaseViewType = db.viewType === "BOARD" ? "BOARD" : "TABLE";
 
   return (
-    <div className="my-2 rounded-lg border bg-card" contentEditable={false}>
+    <div className="mb-2 rounded-lg border bg-card" contentEditable={false}>
       <div className="flex flex-wrap items-center gap-2 border-b p-2">
         <span className="mr-1 truncate text-sm font-semibold">{db.title}</span>
 
