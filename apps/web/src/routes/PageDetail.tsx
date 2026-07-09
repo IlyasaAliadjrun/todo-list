@@ -56,6 +56,7 @@ export function PageDetail() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      <div className="sticky top-0 z-20 space-y-2 bg-background pb-2 pt-1">
       <div className="flex items-start justify-between gap-2">
         <input
           value={icon}
@@ -111,6 +112,7 @@ export function PageDetail() {
         readOnly={!canEdit}
         className="w-full bg-transparent text-3xl font-bold outline-none placeholder:text-muted-foreground"
       />
+      </div>
 
       <PageEditor key={page.id} pageId={page.id} initialContent={page.content} editable={canEdit} />
 

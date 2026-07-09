@@ -157,7 +157,8 @@ export function BoardView({
       onDragStart={() => (draggingRef.current = true)}
       onDragEnd={onDragEnd}
     >
-      <div className="flex gap-3 overflow-x-auto p-3">
+      {/* Tinggi dibatasi → scrollbar horizontal tetap terlihat (tak di dasar board yang panjang). */}
+      <div className="flex max-h-[70vh] gap-3 overflow-auto p-3">
         {columns.map((col) => {
           const { text, color } = labelOf(col.optionId);
           const colId = col.optionId ?? NULL_COL;

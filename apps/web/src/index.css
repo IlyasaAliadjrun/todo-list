@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* BlockNote: sejajarkan konten editor (termasuk block database) dengan judul
+   halaman — hilangkan inset kiri/kanan bawaan. Menu samping (+/drag) tetap muncul
+   di margin kiri (area padding <main>), bukan menyela antara judul & board. */
+.bn-editor {
+  padding-inline: 0 !important;
+}
+
 /* Token warna gaya shadcn/ui (slate). Dark mode via class .dark. */
 @layer base {
   :root {

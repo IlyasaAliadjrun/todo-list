@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useParams } from "@tanstack/react-router";
-import { Menu, Search } from "lucide-react";
+import { Menu, Search, Settings } from "lucide-react";
 import { useState } from "react";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PageTree } from "@/components/page/PageTree";
@@ -26,7 +26,7 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b px-4 py-3 sm:px-6">
+      <header className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b bg-background px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <button
             type="button"
@@ -53,6 +53,15 @@ export function AppLayout() {
           <span className="hidden max-w-[30vw] truncate text-sm text-muted-foreground lg:inline">
             {user?.email}
           </span>
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/settings" })}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+            aria-label="Konfigurasi workspace"
+            title="Konfigurasi workspace"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
           <ThemeToggle />
           <Button size="sm" variant="outline" onClick={onLogout}>
             Keluar

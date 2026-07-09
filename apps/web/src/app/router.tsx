@@ -12,6 +12,7 @@ import { LoginPage } from "@/routes/LoginPage";
 import { PageDetail } from "@/routes/PageDetail";
 import { RegisterPage } from "@/routes/RegisterPage";
 import { TrashPage } from "@/routes/TrashPage";
+import { WorkspaceSettings } from "@/routes/WorkspaceSettings";
 import { useAuthStore } from "@/stores/auth.store";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
@@ -69,11 +70,17 @@ const trashRoute = createRoute({
   component: TrashPage,
 });
 
+const settingsRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/settings",
+  component: WorkspaceSettings,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   inviteRoute,
-  appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute]),
+  appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute, settingsRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });
