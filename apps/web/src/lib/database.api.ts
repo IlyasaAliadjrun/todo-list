@@ -3,6 +3,7 @@ import {
   type CreateDatabaseInput,
   type CreatePropertyInput,
   type Database,
+  type RowAttachment,
   type UpdateDatabaseViewInput,
   type UpdatePropertyInput,
 } from "@notion/shared";
@@ -89,5 +90,17 @@ export function setRowContent(rowId: string, content: unknown[] | null): Promise
   return apiFetch(`/rows/${rowId}/content`, {
     method: "PUT",
     body: JSON.stringify({ content }),
+  });
+}
+
+export async function getRowAttachments(rowId: string): Promise<RowAttachment[]> {
+  const res = await apiFetch<{ attachments: unknown }>(`/rows/${rowId}/attachments`);
+  return Array.isArray(res.attachments) ? (res.attachments as RowAttachment[]) : [];
+}
+
+export function setRowAttachments(rowId: string, attachments: RowAttachment[]): Promise<void> {
+  return apiFetch(`/rows/${rowId}/attachments`, {
+    method: "PUT",
+    body: JSON.stringify({ attachments }),
   });
 }

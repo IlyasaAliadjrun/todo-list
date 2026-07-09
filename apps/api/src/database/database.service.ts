@@ -312,6 +312,25 @@ export class DatabaseService {
     await this.prisma.databaseRow.update({ where: { id }, data: { content: toJson(content) } });
   }
 
+  /** Ambil lampiran record (≥VIEW). */
+  async getRowAttachments(id: string, userId: string): Promise<{ attachments: unknown }> {
+    const row = await this.ownedRow(id, userId, "VIEW");
+    const full = await this.prisma.databaseRow.findUniqueOrThrow({
+      where: { id: row.id },
+      select: { attachments: true },
+    });
+    return { attachments: full.attachments ?? [] };
+  }
+
+  /** Simpan lampiran record (≥EDIT). */
+  async setRowAttachments(id: string, userId: string, attachments: unknown): Promise<void> {
+    await this.ownedRow(id, userId, "EDIT");
+    await this.prisma.databaseRow.update({
+      where: { id },
+      data: { attachments: toJson(attachments) },
+    });
+  }
+
   async deleteRow(id: string, userId: string): Promise<DatabaseDto> {
     const row = await this.ownedRow(id, userId);
     await this.prisma.databaseRow.delete({ where: { id } });

@@ -17,10 +17,19 @@ const { StorageService } = await import("./storage.service");
 describe("StorageService.presignUpload", () => {
   const svc = new StorageService();
 
-  it("menolak file non-gambar", async () => {
+  it("menolak tipe file yang tidak diizinkan", async () => {
     await expect(
-      svc.presignUpload({ filename: "a.pdf", contentType: "application/pdf", size: 100 }),
-    ).rejects.toThrow(/gambar/i);
+      svc.presignUpload({ filename: "a.sh", contentType: "application/x-sh", size: 100 }),
+    ).rejects.toThrow(/tidak diperbolehkan/i);
+  });
+
+  it("mengizinkan lampiran non-gambar (pdf)", async () => {
+    const res = await svc.presignUpload({
+      filename: "dok.pdf",
+      contentType: "application/pdf",
+      size: 2048,
+    });
+    expect(res.key).toMatch(/^uploads\/[\w-]+\.pdf$/);
   });
 
   it("menolak file melebihi 10MB", async () => {

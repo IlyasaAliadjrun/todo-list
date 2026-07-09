@@ -242,6 +242,8 @@ model DatabaseRow {
   order      String
   /// Catatan/isi record (BlockNote JSON) — seperti halaman Notion per baris.
   content    Json?
+  /// Lampiran record: array { name, url, size } (lihat RowAttachment di shared).
+  attachments Json?
   createdAt  DateTime @default(now())
 
   cells CellValue[]

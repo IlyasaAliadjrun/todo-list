@@ -15,6 +15,7 @@ import {
   CreateDatabaseInputSchema,
   CreatePropertyInputSchema,
   MoveInputSchema,
+  RowAttachmentsSchema,
   RowContentSchema,
   UpdateCellInputSchema,
   UpdateDatabaseInputSchema,
@@ -24,6 +25,7 @@ import {
   type CreatePropertyInput,
   type Database,
   type MoveInput,
+  type RowAttachments,
   type RowContent,
   type UpdateCellInput,
   type UpdateDatabaseInput,
@@ -151,6 +153,24 @@ export class DatabaseController {
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<void> {
     return this.db.setRowContent(id, user.id, dto.content);
+  }
+
+  @Get("rows/:id/attachments")
+  getRowAttachments(
+    @Param("id") id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<{ attachments: unknown }> {
+    return this.db.getRowAttachments(id, user.id);
+  }
+
+  @Put("rows/:id/attachments")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  setRowAttachments(
+    @Param("id") id: string,
+    @Body(new ZodValidationPipe(RowAttachmentsSchema)) dto: RowAttachments,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    return this.db.setRowAttachments(id, user.id, dto.attachments);
   }
 
   @Put("rows/:rowId/cells/:propertyId")

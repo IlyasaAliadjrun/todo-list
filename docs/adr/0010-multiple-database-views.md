@@ -63,6 +63,17 @@ konsisten untuk semua anggota workspace.
   `body` (fixed) sehingga tampil penuh & lepas dari contentEditable BlockNote. Opsi SELECT
   kini punya **pemilih warna** (titik warna, siklus saat diklik; opsi baru auto-warna).
 
+## Adendum 2 (catatan, lampiran, assignee)
+
+- **Catatan per-record**: `DatabaseRow.content` (BlockNote JSON) + `GET/PUT /rows/:id/content`;
+  editor non-kolaboratif di panel (autosave, update cache saat simpan).
+- **Lampiran file**: `DatabaseRow.attachments` (array `{name,url,size}`) +
+  `GET/PUT /rows/:id/attachments`. Upload lewat presigned S3 yang sama; kebijakan tipe
+  file dilonggarkan dari "gambar saja" → allowlist (`isAllowedUploadType`: image/video/
+  audio/text/pdf/office/zip/octet-stream), tetap dibatasi 10MB.
+- **Assignee**: cukup properti `MULTI_SELECT` (mis. nama anggota) — dapat diedit di panel;
+  tipe "Person" khusus (avatar anggota workspace) = backlog.
+
 ## Konsekuensi
 
 - View & konfigurasinya persist lintas sesi/anggota (disimpan di DB).

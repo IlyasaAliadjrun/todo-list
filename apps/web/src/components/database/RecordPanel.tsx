@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { addProperty, deleteRow, setCell } from "@/lib/database.api";
 import { CellEditor } from "./CellEditor";
+import { RecordAttachments } from "./RecordAttachments";
 import { RecordNotes } from "./RecordNotes";
 import { buildCellLookup, titleProperty } from "./database-shared";
 
@@ -95,6 +96,11 @@ export function RecordPanel({
               + Tambah properti
             </button>
           </div>
+
+          <hr className="border-border" />
+
+          {/* Lampiran file */}
+          <RecordAttachments rowId={rowId} />
 
           <hr className="border-border" />
 

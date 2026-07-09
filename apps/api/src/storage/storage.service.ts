@@ -2,7 +2,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { BadRequestException, Injectable } from "@nestjs/common";
 import {
-  ALLOWED_UPLOAD_PREFIX,
+  isAllowedUploadType,
   MAX_UPLOAD_BYTES,
   type PresignUploadInput,
   type PresignUploadResponse,
@@ -38,8 +38,8 @@ export class StorageService {
   }
 
   async presignUpload(input: PresignUploadInput): Promise<PresignUploadResponse> {
-    if (!input.contentType.startsWith(ALLOWED_UPLOAD_PREFIX)) {
-      throw new BadRequestException("Hanya file gambar yang diperbolehkan");
+    if (!isAllowedUploadType(input.contentType)) {
+      throw new BadRequestException("Tipe file tidak diperbolehkan");
     }
     if (input.size > MAX_UPLOAD_BYTES) {
       throw new BadRequestException("Ukuran file melebihi batas 10MB");

@@ -69,11 +69,19 @@ export type {
 
 export {
   MAX_UPLOAD_BYTES,
-  ALLOWED_UPLOAD_PREFIX,
+  ALLOWED_UPLOAD_PREFIXES,
+  isAllowedUploadType,
   PresignUploadInputSchema,
   PresignUploadResponseSchema,
+  RowAttachmentSchema,
+  RowAttachmentsSchema,
 } from "./storage/upload";
-export type { PresignUploadInput, PresignUploadResponse } from "./storage/upload";
+export type {
+  PresignUploadInput,
+  PresignUploadResponse,
+  RowAttachment,
+  RowAttachments,
+} from "./storage/upload";
 
 export {
   PropertyTypeSchema,
