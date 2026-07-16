@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useParams } from "@tanstack/react-router";
-import { Menu, Search, Settings } from "lucide-react";
+import { Menu, PanelLeftClose, PanelLeftOpen, Search, Settings } from "lucide-react";
 import { useState } from "react";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PageTree } from "@/components/page/PageTree";
@@ -18,6 +18,7 @@ export function AppLayout() {
   const params = useParams({ strict: false });
   const selectedPageId = params.pageId as string | undefined;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
 
   async function onLogout() {
     await logout();
@@ -35,6 +36,19 @@ export function AppLayout() {
             aria-label="Buka/tutup sidebar"
           >
             <Menu className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setDesktopCollapsed((v) => !v)}
+            className="hidden h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground md:flex"
+            aria-label={desktopCollapsed ? "Tampilkan sidebar" : "Sembunyikan sidebar"}
+            title={desktopCollapsed ? "Tampilkan sidebar" : "Sembunyikan sidebar"}
+          >
+            {desktopCollapsed ? (
+              <PanelLeftOpen className="h-5 w-5" />
+            ) : (
+              <PanelLeftClose className="h-5 w-5" />
+            )}
           </button>
           <span className="shrink-0 font-bold">My Notepad</span>
           <WorkspaceSwitcher />
@@ -74,8 +88,9 @@ export function AppLayout() {
       <div className="flex min-h-0 flex-1">
         <aside
           className={cn(
-            "w-64 shrink-0 flex-col border-r bg-background p-2 md:!static md:!z-auto md:!flex",
+            "w-64 shrink-0 flex-col border-r bg-background p-2",
             sidebarOpen ? "fixed inset-y-0 left-0 z-40 flex" : "hidden",
+            desktopCollapsed ? "md:!hidden" : "md:!static md:!z-auto md:!flex",
           )}
         >
           {workspaceId ? (

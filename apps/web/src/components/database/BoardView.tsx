@@ -1,16 +1,19 @@
 import {
+  closestCorners,
   DndContext,
+  DragOverlay,
   PointerSensor,
   useDraggable,
   useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import type { Database, DatabaseProperty } from "@notion/shared";
 import { groupRowsByOption } from "@notion/shared";
 import { Plus } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { addRow, deleteRow, setCell } from "@/lib/database.api";
 import { RecordCard, optionBadgeClass } from "./database-shared";
 
@@ -25,17 +28,17 @@ function DraggableCard({
   onClick: () => void;
   children: React.ReactNode;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id });
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id });
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
       onClick={onClick}
-      style={
-        transform ? { transform: `translate(${transform.x}px, ${transform.y}px)` } : undefined
-      }
-      className={`cursor-pointer ${isDragging ? "opacity-50" : ""}`}
+      // Overlay yang bergerak saat drag (lihat DragOverlay); elemen asli diredupkan.
+      className={`cursor-grab touch-none active:cursor-grabbing ${
+        isDragging ? "opacity-40" : ""
+      }`}
     >
       {children}
     </div>
@@ -70,17 +73,18 @@ function Column({
         )}
         <span className="text-xs text-muted-foreground">{count}</span>
       </div>
+      {/* Seluruh area kolom = zona drop (flex-1 + min-h), bukan hanya di atas kartu. */}
       <div
         ref={setNodeRef}
-        className={`flex min-h-16 flex-1 flex-col gap-2 rounded-md p-1.5 transition-colors ${
-          isOver ? "bg-secondary" : "bg-muted/40"
+        className={`flex min-h-28 flex-1 flex-col gap-2 rounded-md p-1.5 transition-colors ${
+          isOver ? "bg-secondary ring-2 ring-primary/30" : "bg-muted/40"
         }`}
       >
         {children}
         <button
           type="button"
           onClick={onAdd}
-          className="flex items-center gap-1 rounded px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+          className="mt-auto flex items-center gap-1 rounded px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
         >
           <Plus className="h-3.5 w-3.5" /> Baru
         </button>
@@ -102,9 +106,10 @@ export function BoardView({
   cellOf: (rowId: string, propId: string) => unknown;
   onOpenRow: (rowId: string) => void;
 }) {
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   // Bedakan klik (buka panel) dari drag: set saat drag mulai, klik pasca-drag diabaikan.
   const draggingRef = useRef(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   if (!groupByProperty) {
     return (
@@ -128,8 +133,18 @@ export function BoardView({
     return afterAdd;
   }
 
-  function onDragEnd(e: DragEndEvent) {
+  function onDragStart(e: DragStartEvent) {
+    draggingRef.current = true;
+    setActiveId(String(e.active.id));
+  }
+
+  function endDrag() {
+    setActiveId(null);
     setTimeout(() => (draggingRef.current = false), 0); // reset setelah event klik pasca-drop
+  }
+
+  function onDragEnd(e: DragEndEvent) {
+    endDrag();
     const rowId = String(e.active.id);
     const overId = e.over ? String(e.over.id) : null;
     if (!overId) return;
@@ -154,11 +169,13 @@ export function BoardView({
   return (
     <DndContext
       sensors={sensors}
-      onDragStart={() => (draggingRef.current = true)}
+      collisionDetection={closestCorners}
+      onDragStart={onDragStart}
       onDragEnd={onDragEnd}
+      onDragCancel={endDrag}
     >
-      {/* Tinggi dibatasi → scrollbar horizontal tetap terlihat (tak di dasar board yang panjang). */}
-      <div className="flex max-h-[70vh] gap-3 overflow-auto p-3">
+      {/* Tinggi dibatasi → scrollbar horizontal tetap terlihat; min-h agar kolom tinggi. */}
+      <div className="flex max-h-[70vh] min-h-[18rem] items-stretch gap-3 overflow-auto p-3">
         {columns.map((col) => {
           const { text, color } = labelOf(col.optionId);
           const colId = col.optionId ?? NULL_COL;
@@ -185,6 +202,15 @@ export function BoardView({
           );
         })}
       </div>
+
+      {/* Kartu melayang saat drag → transisi mulus, mengikuti kursor. */}
+      <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" }}>
+        {activeId ? (
+          <div className="w-64 rotate-2 cursor-grabbing opacity-95 shadow-xl">
+            <RecordCard db={db} rowId={activeId} cellOf={cellOf} />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }
