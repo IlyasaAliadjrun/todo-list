@@ -77,7 +77,9 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
 
   return (
     <PeopleContext.Provider value={members}>
-      <div className="mb-2 rounded-lg border bg-card" contentEditable={false}>
+      {/* w-full + min-w-0: block ini adalah flex item di .bn-block-content; tanpa min-w-0
+          ia menolak menyusut di bawah lebar isi (board) dan melar keluar area. */}
+      <div className="mb-2 w-full min-w-0 rounded-lg border bg-card" contentEditable={false}>
         <div className="flex flex-wrap items-center gap-2 border-b p-2">
           <span className="mr-1 truncate text-sm font-semibold">{db.title}</span>
 

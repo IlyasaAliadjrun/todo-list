@@ -55,7 +55,9 @@ export function PageDetail() {
   const canEdit = page.myLevel === "EDIT";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
+    // Full-width: workspace mengisi ruang yang tersedia di resolusi apa pun
+    // (dan makin lega saat sidebar dilipat).
+    <div className="w-full space-y-4">
       <div className="sticky top-0 z-20 space-y-2 bg-background pb-2 pt-1">
       <div className="flex items-start justify-between gap-2">
         <input
