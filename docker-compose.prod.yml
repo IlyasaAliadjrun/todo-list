@@ -35,7 +35,10 @@ services:
       retries: 10
 
   minio:
-    image: minio/minio:latest
+    # Tag RELEASE.* bersifat immutable — jangan pakai :latest (bisa lompat versi diam-diam
+    # saat rebuild). Samakan dengan docker-compose.yml. Upgrade = ganti tag secara sadar,
+    # cek changelog dulu (MinIO pernah membuang fitur Console di rilis tertentu).
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -50,7 +53,7 @@ services:
       retries: 10
 
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     depends_on:
       minio: { condition: service_healthy }
     entrypoint: >

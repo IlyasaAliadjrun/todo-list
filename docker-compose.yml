@@ -39,7 +39,8 @@ services:
       retries: 10
 
   minio:
-    image: minio/minio:latest
+    # Versi dipin & disamakan dengan docker-compose.prod.yml — dev/prod tidak boleh drift.
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
@@ -58,7 +59,7 @@ services:
 
   # One-shot: buat bucket lalu keluar. Aman dijalankan berulang.
   minio-init:
-    image: minio/mc:latest
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
     depends_on:
       minio:
         condition: service_healthy
