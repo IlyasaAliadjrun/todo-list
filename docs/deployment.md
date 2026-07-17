@@ -11,37 +11,69 @@
   HEALTHCHECK ke `/health/live`.
 - `apps/web/Dockerfile.prod` + `apps/web/nginx.conf` — build statis Vite disajikan **Nginx**,
   sekaligus **proxy** REST (`/auth`, `/pages`, …) & **WebSocket** (`/collab`) ke service `api`.
+- `Caddyfile` + service `caddy` — terminasi **TLS** (Let's Encrypt otomatis), satu-satunya
+  service yang terekspos internet (80/443). Route: `APP_DOMAIN` → `web:80`,
+  `STORAGE_DOMAIN` → `minio:9000`.
 - `docker-compose.prod.yml` — stack single-host, termasuk service `migrate` (sekali,
   `prisma migrate deploy`) yang harus sukses sebelum `api` start.
+
+## Prasyarat server
+
+- Ubuntu **24.04 LTS** (20.04 sudah lewat standard support — lihat catatan di bawah).
+- ≤10 user: **2 vCPU / 4 GB RAM / 60 GB SSD** (+swap 2–4 GB bila build di server).
+  10–50 user: **4 vCPU / 8 GB / 100 GB**. RAM ditentukan oleh *build* (Vite+Nest ≈3–4 GB),
+  bukan runtime (idle ≈1–1,5 GB). RAM pas-pasan → build image di CI, server cukup `pull`.
+- Docker Engine + Compose v2 (repo resmi Docker). Node/pnpm tidak perlu di server.
+- **DNS**: A record `app.domain.com` dan `storage.domain.com` → IP server, **sebelum**
+  stack dinyalakan (Caddy butuh ini untuk validasi ACME).
+- **Firewall**: `ufw allow 22,80,443` saja. Postgres/Redis/MinIO tidak di-publish.
 
 ## Deploy single-host (VPS)
 
 ```bash
 # 1. Siapkan .env produksi (secret KUAT — jangan pakai default dev):
 cp .env.example .env
-#   - JWT_ACCESS_SECRET/JWT_REFRESH_SECRET: openssl rand -hex 32
+#   - NODE_ENV=production
+#   - JWT_ACCESS_SECRET/JWT_REFRESH_SECRET: openssl rand -hex 32 (harus BERBEDA)
 #   - POSTGRES_PASSWORD, S3_ACCESS_KEY, S3_SECRET_KEY: ganti semua
-#   - S3_PUBLIC_ENDPOINT: URL MinIO/S3 yang DIAKSES BROWSER (mis. https://storage.domain.com)
-#   - WEB_ORIGIN: https://app.domain.com
+#   - APP_DOMAIN=https://app.domain.com  ·  WEB_ORIGIN & APP_URL = sama
+#   - STORAGE_DOMAIN=https://storage.domain.com  ·  S3_PUBLIC_ENDPOINT = sama
+#   - ACME_EMAIL=admin@domain.com
+#   - HOCUSPOCUS_URL=wss://app.domain.com/collab   (wss, bukan ws)
 
 # 2. Build & jalankan (migrate otomatis jalan sebelum api):
 docker compose -f docker-compose.prod.yml up -d --build
 
-# 3. Cek health:
-curl -fsS http://localhost:80/health   # via nginx → api → {"status":"ok"}
+# 3. Cek health (lewat Caddy → nginx → api):
+curl -fsS https://app.domain.com/health   # → {"status":"ok"}
 ```
 
 ### TLS (WAJIB untuk produksi)
 
-Refresh-token cookie ber-flag **Secure** saat `NODE_ENV=production` → hanya terkirim
-lewat **HTTPS**. Taruh reverse proxy TLS (Caddy/Traefik/Nginx) di depan service `web`:
+Refresh-token cookie ber-flag **Secure** saat `NODE_ENV=production` → hanya terkirim lewat
+**HTTPS**. Tanpa TLS user akan ter-logout begitu access token (15 menit) habis. Service
+`caddy` menangani ini otomatis; `web` sengaja tidak mem-publish port apa pun.
 
 ```
-app.domain.com     → web:80   (SPA + proxy API/ws)
-storage.domain.com → minio:9000  (opsional, bila upload gambar dipakai)
+app.domain.com     → web:80      (SPA + proxy REST & ws /collab → api:3001)
+storage.domain.com → minio:9000  (presigned PUT/GET gambar, diakses browser langsung)
 ```
 
-Contoh Caddy: `app.domain.com { reverse_proxy web:80 }` (Caddy urus sertifikat otomatis).
+`storage.domain.com` **bukan opsional** bila upload gambar dipakai: presigned URL
+ditandatangani terhadap host itu, jadi Host header diteruskan apa adanya (default Caddy).
+Volume `caddydata` menyimpan sertifikat — jangan dihapus (rate limit Let's Encrypt).
+
+Uji lokal tanpa domain: `APP_DOMAIN=http://localhost`, `STORAGE_DOMAIN=http://localhost:9000`
+(skema `http://` mematikan ACME).
+
+### IP klien di belakang proxy
+
+Rantai proxy ada dua hop (Caddy → Nginx), jadi `main.ts` menyetel
+`app.set("trust proxy", "uniquelocal")` — hanya hop beralamat privat (jaringan Docker) yang
+dipercaya. Tanpa itu `req.ip` = IP container proxy, sehingga rate limit global dan
+rate-limit login (kunci `ip:email`) kolaps jadi satu bucket bersama untuk semua user, dan
+IP sesi tercatat salah. Caddy juga **mengganti** (bukan menambah) `X-Forwarded-For` dengan
+`{remote_host}` agar klien tidak bisa memalsukan IP asal.
 
 ## Alternatif PaaS / managed
 

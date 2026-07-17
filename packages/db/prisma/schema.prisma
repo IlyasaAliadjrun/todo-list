@@ -205,20 +205,33 @@ model Database {
   pageId      String?
   page        Page?     @relation(fields: [pageId], references: [id], onDelete: Cascade)
   title       String    @default("Untitled")
-  /// View aktif & konfigurasinya (lihat ADR 0010). *PropertyId = soft ref ke
-  /// DatabaseProperty (divalidasi saat set, fallback aman saat render).
-  viewType          DatabaseViewType @default(TABLE)
-  groupByPropertyId String?
-  datePropertyId    String?
-  coverPropertyId   String?
+  /// View bertab: tab yang sedang aktif (soft ref ke DatabaseViewConfig).
+  activeViewId String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   properties DatabaseProperty[]
   rows       DatabaseRow[]
+  views      DatabaseViewConfig[]
 
   @@index([workspaceId])
   @@index([pageId])
+}
+
+/// Satu tab view tersimpan pada sebuah database (mis. "By Status" Board,
+/// "All Projects" Tabel). Lihat ADR 0010.
+model DatabaseViewConfig {
+  id         String           @id @default(cuid())
+  databaseId String
+  database   Database         @relation(fields: [databaseId], references: [id], onDelete: Cascade)
+  name       String           @default("View")
+  type       DatabaseViewType @default(TABLE)
+  /// Properti SELECT sumber kolom Board (soft ref, divalidasi saat set).
+  groupByPropertyId String?
+  order      String
+  createdAt  DateTime         @default(now())
+
+  @@index([databaseId, order])
 }
 
 model DatabaseProperty {

@@ -101,10 +101,31 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    # Tidak mem-publish port: satu-satunya jalan masuk adalah `caddy` (TLS).
+
+  # Terminasi TLS + sertifikat otomatis. Satu-satunya service yang terekspos ke internet.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: "${APP_DOMAIN:?domain aplikasi wajib diisi, mis. https://app.domain.com}"
+      STORAGE_DOMAIN: "${STORAGE_DOMAIN:?domain storage wajib diisi, mis. https://storage.domain.com}"
+      ACME_EMAIL: "${ACME_EMAIL:?email untuk notifikasi Let's Encrypt wajib diisi}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data # sertifikat — JANGAN dihapus, ada rate limit Let's Encrypt.
+      - caddyconfig:/config
     ports:
-      - "${WEB_PORT:-80}:80"
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    depends_on:
+      - web
+      - minio
 
 volumes:
   pgdata:
   redisdata:
   miniodata:
+  caddydata:
+  caddyconfig:

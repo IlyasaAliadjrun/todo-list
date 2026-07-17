@@ -55,15 +55,25 @@ export const CellValueSchema = z.object({
 export type CellValue = z.infer<typeof CellValueSchema>;
 
 /** Database lengkap (properti + baris + sel) untuk table view. */
+/** Satu tab view tersimpan (mis. "By Status" Board, "All Projects" Tabel). */
+export const DatabaseViewConfigSchema = z.object({
+  id: z.string(),
+  databaseId: z.string(),
+  name: z.string(),
+  type: DatabaseViewTypeSchema,
+  groupByPropertyId: z.string().nullable(),
+  order: z.string(),
+});
+export type DatabaseViewConfig = z.infer<typeof DatabaseViewConfigSchema>;
+
 export const DatabaseSchema = z.object({
   id: z.string(),
   workspaceId: z.string(),
   pageId: z.string().nullable(),
   title: z.string(),
-  viewType: DatabaseViewTypeSchema,
-  groupByPropertyId: z.string().nullable(),
-  datePropertyId: z.string().nullable(),
-  coverPropertyId: z.string().nullable(),
+  /** Tab view (urut). Selalu ada minimal satu. */
+  views: z.array(DatabaseViewConfigSchema),
+  activeViewId: z.string().nullable(),
   properties: z.array(DatabasePropertySchema),
   rows: z.array(DatabaseRowSchema),
   cells: z.array(CellValueSchema),
@@ -80,16 +90,26 @@ export type CreateDatabaseInput = z.infer<typeof CreateDatabaseInputSchema>;
 export const UpdateDatabaseInputSchema = z.object({ title: z.string().trim().min(1).max(120) });
 export type UpdateDatabaseInput = z.infer<typeof UpdateDatabaseInputSchema>;
 
-/** Ubah view aktif & properti konfigurasinya. `null` = kosongkan referensi. */
-export const UpdateDatabaseViewInputSchema = z
+/** Buat tab view baru. */
+export const CreateViewInputSchema = z.object({
+  name: z.string().trim().min(1).max(60).optional(),
+  type: DatabaseViewTypeSchema.optional(),
+});
+export type CreateViewInput = z.infer<typeof CreateViewInputSchema>;
+
+/** Ubah satu tab view (nama/tipe/group-by). `null` = kosongkan referensi. */
+export const UpdateViewInputSchema = z
   .object({
-    viewType: DatabaseViewTypeSchema.optional(),
+    name: z.string().trim().min(1).max(60).optional(),
+    type: DatabaseViewTypeSchema.optional(),
     groupByPropertyId: z.string().nullable().optional(),
-    datePropertyId: z.string().nullable().optional(),
-    coverPropertyId: z.string().nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "Tidak ada perubahan" });
-export type UpdateDatabaseViewInput = z.infer<typeof UpdateDatabaseViewInputSchema>;
+export type UpdateViewInput = z.infer<typeof UpdateViewInputSchema>;
+
+/** Pilih tab view aktif. */
+export const SetActiveViewInputSchema = z.object({ viewId: z.string() });
+export type SetActiveViewInput = z.infer<typeof SetActiveViewInputSchema>;
 
 export const CreatePropertyInputSchema = z.object({
   name: z.string().trim().min(1).max(60).optional(),

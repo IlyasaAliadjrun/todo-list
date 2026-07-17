@@ -74,6 +74,23 @@ konsisten untuk semua anggota workspace.
 - **Assignee**: cukup properti `MULTI_SELECT` (mis. nama anggota) — dapat diedit di panel;
   tipe "Person" khusus (avatar anggota workspace) = backlog.
 
+## Adendum 3 (multi-view bertab, ikon record, properti PERSON)
+
+- **Multi-view bertab** menggantikan "satu view aktif per database" (Keputusan 1).
+  Model **`DatabaseViewConfig`** (id, databaseId, name, type, groupByPropertyId, order);
+  `Database.activeViewId` menunjuk tab aktif; kolom lama `viewType`/`groupBy`/`date`/
+  `coverPropertyId` **dibuang** setelah **migrasi data** (tiap database dapat satu tab
+  default dari config lamanya; viewType non-BOARD → TABLE). Endpoint:
+  `POST /databases/:id/views`, `PATCH /views/:id`, `DELETE /views/:id` (min. 1 view
+  harus tersisa), `PATCH /databases/:id/active-view`. Database baru otomatis dapat
+  satu tab "Tabel".
+- **Ikon record**: `DatabaseRow.icon` + `PATCH /rows/:id` — tampil di kartu Board & panel.
+- **Properti PERSON**: nilai sel = array `userId`; server memvalidasi setiap id adalah
+  anggota workspace database (400 bila bukan). Frontend memakai `PeopleContext`
+  (dari `listMembers`) → pemilih anggota + avatar inisial.
+- **Catatan proxy dev**: setiap prefix REST baru (mis. `/views`) wajib ditambahkan ke
+  `apiProxy` di `apps/web/vite.config.ts`, kalau tidak request dev kena 404 dari Vite.
+
 ## Konsekuensi
 
 - View & konfigurasinya persist lintas sesi/anggota (disimpan di DB).

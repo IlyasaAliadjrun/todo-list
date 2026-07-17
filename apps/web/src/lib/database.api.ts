@@ -3,10 +3,11 @@ import {
   type CreateDatabaseInput,
   type CreatePropertyInput,
   type Database,
+  type CreateViewInput,
   type RowAttachment,
-  type UpdateDatabaseViewInput,
   type UpdatePropertyInput,
   type UpdateRowInput,
+  type UpdateViewInput,
 } from "@notion/shared";
 import { apiFetch } from "@/lib/http";
 
@@ -30,10 +31,30 @@ export function deleteDatabase(id: string): Promise<void> {
   return apiFetch(`/databases/${id}`, { method: "DELETE" });
 }
 
-export function updateDatabaseView(id: string, input: UpdateDatabaseViewInput): Promise<Database> {
+export function createView(databaseId: string, input: CreateViewInput = {}): Promise<Database> {
   return apiFetch(
-    `/databases/${id}/view`,
+    `/databases/${databaseId}/views`,
+    { method: "POST", body: JSON.stringify(input) },
+    DatabaseSchema,
+  );
+}
+
+export function updateView(viewId: string, input: UpdateViewInput): Promise<Database> {
+  return apiFetch(
+    `/views/${viewId}`,
     { method: "PATCH", body: JSON.stringify(input) },
+    DatabaseSchema,
+  );
+}
+
+export function deleteView(viewId: string): Promise<Database> {
+  return apiFetch(`/views/${viewId}`, { method: "DELETE" }, DatabaseSchema);
+}
+
+export function setActiveView(databaseId: string, viewId: string): Promise<Database> {
+  return apiFetch(
+    `/databases/${databaseId}/active-view`,
+    { method: "PATCH", body: JSON.stringify({ viewId }) },
     DatabaseSchema,
   );
 }

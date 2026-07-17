@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import cookieParser from "cookie-parser";
 import { json, urlencoded } from "express";
 import helmet from "helmet";
@@ -14,8 +15,18 @@ import { loadEnv } from "./config/env";
 async function bootstrap(): Promise<void> {
   const env = loadEnv();
 
-  const app = await NestFactory.create(AppModule, { bufferLogs: true, bodyParser: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+    bodyParser: false,
+  });
   app.useLogger(app.get(PinoLogger));
+
+  // Di produksi API berada di belakang Caddy → Nginx. Tanpa ini `req.ip` bernilai IP
+  // container proxy, sehingga rate limit global & login (kunci `ip:email`) kolaps jadi
+  // satu bucket bersama untuk semua user, dan IP sesi tercatat salah.
+  // "uniquelocal" hanya memercayai hop beralamat privat/loopback (jaringan Docker), jadi
+  // X-Forwarded-For kiriman klien dari internet tidak bisa memalsukan IP asal.
+  app.set("trust proxy", "uniquelocal");
 
   // Security headers + batas ukuran payload.
   app.use(helmet());

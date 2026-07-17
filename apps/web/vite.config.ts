@@ -41,6 +41,7 @@ const apiProxy: Record<string, string | { target: string; ws?: boolean }> = Obje
     "/databases",
     "/properties",
     "/rows",
+    "/views",
     "/uploads",
   ].map((p) => [p, API_TARGET]),
 );

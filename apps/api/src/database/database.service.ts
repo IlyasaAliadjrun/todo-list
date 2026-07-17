@@ -6,9 +6,10 @@ import {
   type DatabaseProperty as PropertyDto,
   type PermissionLevel,
   type SelectOption,
-  type UpdateDatabaseViewInput,
+  type CreateViewInput,
   type UpdatePropertyInput,
   type UpdateRowInput,
+  type UpdateViewInput,
 } from "@notion/shared";
 import { Prisma } from "@notion/db";
 import { generateKeyBetween } from "fractional-indexing";
@@ -88,6 +89,7 @@ export class DatabaseService {
       include: {
         properties: { orderBy: { order: "asc" } },
         rows: { orderBy: { order: "asc" }, include: { cells: true } },
+        views: { orderBy: { order: "asc" } },
       },
     });
 
@@ -109,10 +111,15 @@ export class DatabaseService {
       workspaceId: db.workspaceId,
       pageId: db.pageId,
       title: db.title,
-      viewType: db.viewType,
-      groupByPropertyId: db.groupByPropertyId,
-      datePropertyId: db.datePropertyId,
-      coverPropertyId: db.coverPropertyId,
+      views: db.views.map((v) => ({
+        id: v.id,
+        databaseId: v.databaseId,
+        name: v.name,
+        type: v.type,
+        groupByPropertyId: v.groupByPropertyId,
+        order: v.order,
+      })),
+      activeViewId: db.activeViewId,
       properties,
       rows: db.rows.map((r) => ({
         id: r.id,
@@ -149,6 +156,16 @@ export class DatabaseService {
       await tx.databaseRow.create({
         data: { databaseId: created.id, order: generateKeyBetween(null, null) },
       });
+      // Setiap database punya minimal satu tab view (default: Tabel).
+      const view = await tx.databaseViewConfig.create({
+        data: {
+          databaseId: created.id,
+          name: "Tabel",
+          type: "TABLE",
+          order: generateKeyBetween(null, null),
+        },
+      });
+      await tx.database.update({ where: { id: created.id }, data: { activeViewId: view.id } });
       return created;
     });
 
@@ -166,42 +183,103 @@ export class DatabaseService {
     return this.loadFull(id);
   }
 
-  /** Ubah view aktif + properti konfigurasinya (butuh EDIT). Referensi divalidasi. */
-  async updateView(
-    id: string,
-    userId: string,
-    input: UpdateDatabaseViewInput,
-  ): Promise<DatabaseDto> {
-    await this.ownedDatabase(id, userId);
-    const props = await this.prisma.databaseProperty.findMany({
-      where: { databaseId: id },
-      select: { id: true, type: true },
+  private async ownedView(id: string, userId: string, min: PermissionLevel = "EDIT") {
+    const view = await this.prisma.databaseViewConfig.findUnique({
+      where: { id },
+      include: { database: true },
     });
+    if (!view) throw new NotFoundException("View tidak ditemukan");
+    await this.requireDbLevel(view.database, userId, min);
+    return view;
+  }
 
-    // Validasi soft-ref: id (bila non-null) harus milik database & bertipe sesuai.
-    const requireProp = (propId: string | null | undefined, type: PropertyDto["type"], label: string) => {
-      if (propId == null) return;
-      const p = props.find((x) => x.id === propId);
-      if (!p) throw new BadRequestException(`Properti ${label} tidak ditemukan di database ini`);
-      if (p.type !== type)
-        throw new BadRequestException(`Properti ${label} harus bertipe ${type}`);
-    };
-    requireProp(input.groupByPropertyId, "SELECT", "group-by (Board)");
-    requireProp(input.datePropertyId, "DATE", "tanggal (Calendar)");
-    requireProp(input.coverPropertyId, "URL", "sampul (Gallery)");
+  /** Validasi group-by: properti harus milik database & bertipe SELECT. */
+  private async assertGroupBy(databaseId: string, propId: string | null | undefined): Promise<void> {
+    if (propId == null) return;
+    const p = await this.prisma.databaseProperty.findUnique({ where: { id: propId } });
+    if (!p || p.databaseId !== databaseId) {
+      throw new BadRequestException("Properti group-by tidak ditemukan di database ini");
+    }
+    if (p.type !== "SELECT") throw new BadRequestException("Properti group-by harus bertipe SELECT");
+  }
 
+  /** Tambah tab view baru (butuh EDIT) dan jadikan aktif. */
+  async createView(
+    databaseId: string,
+    userId: string,
+    input: CreateViewInput,
+  ): Promise<DatabaseDto> {
+    await this.ownedDatabase(databaseId, userId);
+    const last = await this.prisma.databaseViewConfig.findFirst({
+      where: { databaseId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    });
+    const created = await this.prisma.databaseViewConfig.create({
+      data: {
+        databaseId,
+        name: input.name?.trim() || (input.type === "BOARD" ? "Board" : "Tabel"),
+        type: input.type ?? "TABLE",
+        order: generateKeyBetween(last?.order ?? null, null),
+      },
+    });
     await this.prisma.database.update({
+      where: { id: databaseId },
+      data: { activeViewId: created.id },
+    });
+    return this.loadFull(databaseId);
+  }
+
+  /** Ubah satu tab view: nama/tipe/group-by (butuh EDIT). */
+  async updateView(id: string, userId: string, input: UpdateViewInput): Promise<DatabaseDto> {
+    const view = await this.ownedView(id, userId);
+    await this.assertGroupBy(view.databaseId, input.groupByPropertyId);
+    await this.prisma.databaseViewConfig.update({
       where: { id },
       data: {
-        ...(input.viewType !== undefined ? { viewType: input.viewType } : {}),
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.type !== undefined ? { type: input.type } : {}),
         ...(input.groupByPropertyId !== undefined
           ? { groupByPropertyId: input.groupByPropertyId }
           : {}),
-        ...(input.datePropertyId !== undefined ? { datePropertyId: input.datePropertyId } : {}),
-        ...(input.coverPropertyId !== undefined ? { coverPropertyId: input.coverPropertyId } : {}),
       },
     });
-    return this.loadFull(id);
+    return this.loadFull(view.databaseId);
+  }
+
+  /** Hapus tab view (butuh EDIT). Minimal satu view harus tersisa. */
+  async deleteView(id: string, userId: string): Promise<DatabaseDto> {
+    const view = await this.ownedView(id, userId);
+    const count = await this.prisma.databaseViewConfig.count({
+      where: { databaseId: view.databaseId },
+    });
+    if (count <= 1) throw new BadRequestException("Minimal satu view harus ada");
+
+    await this.prisma.databaseViewConfig.delete({ where: { id } });
+    // Bila view aktif dihapus → pilih view pertama yang tersisa.
+    const db = await this.prisma.database.findUniqueOrThrow({ where: { id: view.databaseId } });
+    if (db.activeViewId === id) {
+      const first = await this.prisma.databaseViewConfig.findFirst({
+        where: { databaseId: view.databaseId },
+        orderBy: { order: "asc" },
+      });
+      await this.prisma.database.update({
+        where: { id: view.databaseId },
+        data: { activeViewId: first?.id ?? null },
+      });
+    }
+    return this.loadFull(view.databaseId);
+  }
+
+  /** Pilih tab view aktif (butuh EDIT). */
+  async setActiveView(databaseId: string, userId: string, viewId: string): Promise<DatabaseDto> {
+    await this.ownedDatabase(databaseId, userId);
+    const view = await this.prisma.databaseViewConfig.findUnique({ where: { id: viewId } });
+    if (!view || view.databaseId !== databaseId) {
+      throw new BadRequestException("View tidak ditemukan di database ini");
+    }
+    await this.prisma.database.update({ where: { id: databaseId }, data: { activeViewId: viewId } });
+    return this.loadFull(databaseId);
   }
 
   async deleteDatabase(id: string, userId: string): Promise<void> {

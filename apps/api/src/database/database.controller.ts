@@ -19,7 +19,9 @@ import {
   RowContentSchema,
   UpdateCellInputSchema,
   UpdateDatabaseInputSchema,
-  UpdateDatabaseViewInputSchema,
+  CreateViewInputSchema,
+  UpdateViewInputSchema,
+  SetActiveViewInputSchema,
   UpdatePropertyInputSchema,
   UpdateRowInputSchema,
   type CreateDatabaseInput,
@@ -30,7 +32,9 @@ import {
   type RowContent,
   type UpdateCellInput,
   type UpdateDatabaseInput,
-  type UpdateDatabaseViewInput,
+  type CreateViewInput,
+  type UpdateViewInput,
+  type SetActiveViewInput,
   type UpdatePropertyInput,
   type UpdateRowInput,
 } from "@notion/shared";
@@ -67,13 +71,36 @@ export class DatabaseController {
     return this.db.updateDatabase(id, user.id, dto.title);
   }
 
-  @Patch("databases/:id/view")
+  @Post("databases/:id/views")
+  createView(
+    @Param("id") databaseId: string,
+    @Body(new ZodValidationPipe(CreateViewInputSchema)) dto: CreateViewInput,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<Database> {
+    return this.db.createView(databaseId, user.id, dto);
+  }
+
+  @Patch("databases/:id/active-view")
+  setActiveView(
+    @Param("id") databaseId: string,
+    @Body(new ZodValidationPipe(SetActiveViewInputSchema)) dto: SetActiveViewInput,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<Database> {
+    return this.db.setActiveView(databaseId, user.id, dto.viewId);
+  }
+
+  @Patch("views/:id")
   updateView(
     @Param("id") id: string,
-    @Body(new ZodValidationPipe(UpdateDatabaseViewInputSchema)) dto: UpdateDatabaseViewInput,
+    @Body(new ZodValidationPipe(UpdateViewInputSchema)) dto: UpdateViewInput,
     @CurrentUser() user: AuthenticatedUser,
   ): Promise<Database> {
     return this.db.updateView(id, user.id, dto);
+  }
+
+  @Delete("views/:id")
+  deleteView(@Param("id") id: string, @CurrentUser() user: AuthenticatedUser): Promise<Database> {
+    return this.db.deleteView(id, user.id);
   }
 
   @Delete("databases/:id")

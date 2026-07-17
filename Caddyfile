@@ -1,0 +1,31 @@
+# Caddyfile — terminasi TLS di depan stack produksi (lihat docker-compose.prod.yml).
+# Sertifikat Let's Encrypt otomatis; DNS kedua domain harus sudah mengarah ke server ini.
+#
+# Uji lokal tanpa domain publik: set APP_DOMAIN=http://localhost dan
+# STORAGE_DOMAIN=http://localhost:9000 (skema http:// mematikan ACME).
+
+{
+	email {$ACME_EMAIL}
+}
+
+# SPA + REST + WebSocket /collab → Nginx (apps/web/nginx.conf) → api:3001.
+{$APP_DOMAIN} {
+	# Ganti (bukan append) XFF: klien tak bisa memalsukan IP asal lewat header kiriman.
+	# API mem-parsing rantai ini untuk rate-limit per-IP; lihat "trust proxy" di main.ts.
+	reverse_proxy web:80 {
+		header_up X-Forwarded-For {remote_host}
+	}
+}
+
+# Object storage: presigned PUT & GET gambar langsung dari browser ke MinIO.
+# Presigned URL ditandatangani terhadap host ini, jadi Host header diteruskan apa adanya
+# (perilaku default Caddy) — kalau ditimpa, signature MinIO jadi tidak valid.
+{$STORAGE_DOMAIN} {
+	# MAX_UPLOAD_BYTES = 10MB (packages/shared/src/storage/upload.ts) + headroom.
+	request_body {
+		max_size 12MB
+	}
+	reverse_proxy minio:9000 {
+		header_up X-Forwarded-For {remote_host}
+	}
+}

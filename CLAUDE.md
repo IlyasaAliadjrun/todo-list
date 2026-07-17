@@ -125,14 +125,16 @@ docker compose up -d      # nyalakan postgres, redis, minio
   migrate. E2E Playwright (alur inti) + CI GitHub Actions (quality + e2e). Lihat
   `docs/deployment.md`.
 - **v1 SELESAI.** Backlog fase 9+ ada di `docs/roadmap.md`.
-- **Fase 9 (Database views + record panel) — SELESAI.** View aktif per-database di-persist
-  (`Database.viewType` + `groupBy/date/coverPropertyId`, lihat ADR 0010). UI menampilkan **Tabel**
-  & **Board** (Kanban, group-by SELECT, drag antar kolom via @dnd-kit → `setCell`); enum masih
-  punya GALLERY/CALENDAR (ditunda dari UI per feedback UX — non-BOARD → Tabel). **RecordPanel**:
-  klik kartu Board / tombol buka baris Tabel → panel kanan (peek ala Notion) untuk edit semua
-  properti (portal, backdrop, Escape). Menu kolom & dropdown multi-select via `FloatingMenu`
-  (portal, tak ter-clip); opsi punya pemilih warna. Endpoint `PATCH /databases/:id/view` (≥EDIT,
-  validasi tipe properti). Helper murni `groupRowsByOption`/`bucketRowsByDate` (shared, diuji).
+- **Fase 9 (Database views + record panel) — SELESAI.** **Multi-view bertab**: model
+  `DatabaseViewConfig` (name/type/groupBy/order) + `Database.activeViewId`; tipe UI = **Tabel**
+  & **Board** (Kanban, group-by SELECT, drag antar kolom via @dnd-kit → `setCell`, drop se-kolom
+  via `closestCorners` + DragOverlay). Endpoint view: `POST /databases/:id/views`, `PATCH /views/:id`,
+  `DELETE /views/:id`, `PATCH /databases/:id/active-view` (≥EDIT). **RecordPanel** (peek ala Notion):
+  klik kartu / tombol buka baris → edit properti + **ikon emoji** (`DatabaseRow.icon`) + **catatan**
+  BlockNote (`DatabaseRow.content`) + **lampiran file** (`DatabaseRow.attachments`, presigned S3).
+  Properti **PERSON** (array userId, divalidasi anggota workspace) + avatar. Menu via `FloatingMenu`
+  (portal, tak ter-clip); opsi SELECT punya pemilih warna. Lihat ADR 0010.
+  ⚠️ Prefix REST baru wajib ditambah ke `apiProxy` di `apps/web/vite.config.ts`.
 
 ## Slash command tersedia (lihat .claude/commands/)
 
