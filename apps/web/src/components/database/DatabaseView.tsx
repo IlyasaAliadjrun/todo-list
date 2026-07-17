@@ -12,7 +12,7 @@ import {
 import { listMembers } from "@/lib/workspace.api";
 import { FloatingMenu } from "@/components/ui/FloatingMenu";
 import { SelectMenu } from "@/components/ui/SelectMenu";
-import { PeopleContext, buildCellLookup } from "./database-shared";
+import { PeopleContext, buildCellLookup, type RunFn } from "./database-shared";
 import { TableView } from "./TableView";
 import { BoardView } from "./BoardView";
 import { RecordPanel } from "./RecordPanel";
@@ -31,6 +31,12 @@ function resolveGroupBy(db: Database, storedId: string | null): DatabaseProperty
 
 function iconOf(type: DatabaseViewType): typeof Table2 {
   return type === "BOARD" ? Columns3 : Table2;
+}
+
+/** Satu aksi database: thunk ke server + updater optimistic opsional. */
+interface Job {
+  thunk: () => Promise<Database>;
+  optimistic?: (db: Database) => Database;
 }
 
 export function DatabaseView({ databaseId }: { databaseId: string }) {
@@ -53,11 +59,24 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
     enabled: !!db?.workspaceId,
   });
 
+  // Optimistic update: UI berubah seketika (tak menunggu XHR), respons server
+  // menimpanya, dan bila gagal cache dikembalikan ke kondisi sebelumnya.
+  const key = ["database", databaseId];
   const mutation = useMutation({
-    mutationFn: (thunk: () => Promise<Database>) => thunk(),
-    onSuccess: (data) => qc.setQueryData(["database", databaseId], data),
+    mutationFn: (job: Job) => job.thunk(),
+    onMutate: async (job: Job) => {
+      if (!job.optimistic) return {};
+      await qc.cancelQueries({ queryKey: key });
+      const prev = qc.getQueryData<Database>(key);
+      if (prev) qc.setQueryData(key, job.optimistic(prev));
+      return { prev };
+    },
+    onError: (_err, _job, ctx) => {
+      if (ctx?.prev) qc.setQueryData(key, ctx.prev);
+    },
+    onSuccess: (data) => qc.setQueryData(key, data),
   });
-  const run = (thunk: () => Promise<Database>): void => mutation.mutate(thunk);
+  const run: RunFn = (thunk, optimistic) => mutation.mutate({ thunk, optimistic });
 
   if (isLoading)
     return (

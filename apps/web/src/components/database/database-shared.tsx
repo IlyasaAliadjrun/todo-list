@@ -77,6 +77,36 @@ export function PersonChips({ userIds }: { userIds: string[] }) {
   );
 }
 
+/**
+ * Menjalankan aksi database. `optimistic` (opsional) memperbarui cache SEKARANG
+ * supaya UI tak menunggu XHR; hasil server tetap menimpanya, dan bila gagal
+ * cache dikembalikan (rollback).
+ */
+export type RunFn = (
+  thunk: () => Promise<Database>,
+  optimistic?: (db: Database) => Database,
+) => void;
+
+/** Salinan db dengan satu sel di-set (untuk optimistic update). */
+export function withCell(
+  db: Database,
+  rowId: string,
+  propertyId: string,
+  value: unknown,
+): Database {
+  const cells = db.cells.filter((c) => !(c.rowId === rowId && c.propertyId === propertyId));
+  return { ...db, cells: [...cells, { rowId, propertyId, value }] };
+}
+
+/** Salinan db tanpa satu baris beserta selnya (untuk optimistic delete). */
+export function withoutRow(db: Database, rowId: string): Database {
+  return {
+    ...db,
+    rows: db.rows.filter((r) => r.id !== rowId),
+    cells: db.cells.filter((c) => c.rowId !== rowId),
+  };
+}
+
 /** Lookup nilai sel O(1). */
 export function buildCellLookup(db: Database): (rowId: string, propId: string) => unknown {
   const map = new Map<string, unknown>();

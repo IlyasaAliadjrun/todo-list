@@ -5,6 +5,7 @@ import {
   addProperty,
   addRow,
   deleteProperty,
+  deleteRow,
   moveProperty,
   setCell,
   updateProperty,
@@ -12,7 +13,16 @@ import {
 import { CellEditor } from "./CellEditor";
 import { FloatingMenu } from "@/components/ui/FloatingMenu";
 import { SelectMenu } from "@/components/ui/SelectMenu";
-import { OPTION_COLORS, TYPE_LABELS, buildCellLookup, displayText, swatchClass } from "./database-shared";
+import {
+  OPTION_COLORS,
+  TYPE_LABELS,
+  buildCellLookup,
+  displayText,
+  swatchClass,
+  withCell,
+  withoutRow,
+  type RunFn,
+} from "./database-shared";
 
 const TYPES = Object.keys(TYPE_LABELS) as PropertyType[];
 
@@ -30,7 +40,7 @@ interface HeaderProps {
   onSort: () => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
-  run: (thunk: () => Promise<Database>) => void;
+  run: RunFn;
 }
 
 function PropertyHeader({
@@ -234,7 +244,7 @@ export function TableView({
   onOpenRow,
 }: {
   db: Database;
-  run: (thunk: () => Promise<Database>) => void;
+  run: RunFn;
   onOpenRow: (rowId: string) => void;
 }) {
   const [sort, setSort] = useState<{ propertyId: string; dir: "asc" | "desc" } | null>(null);
@@ -316,16 +326,32 @@ export function TableView({
           <tbody>
             {rows.map((row) => (
               <tr key={row.id} className="group">
-                <td className="border-b border-r text-center align-middle">
-                  <button
-                    type="button"
-                    onClick={() => onOpenRow(row.id)}
-                    className="text-muted-foreground opacity-0 hover:text-foreground group-hover:opacity-100"
-                    aria-label="Buka record"
-                    title="Buka"
-                  >
-                    <Maximize2 className="mx-auto h-3.5 w-3.5" />
-                  </button>
+                <td className="border-b border-r align-middle">
+                  <div className="flex items-center justify-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => onOpenRow(row.id)}
+                      className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                      aria-label="Buka record"
+                      title="Buka"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        run(
+                          () => deleteRow(row.id),
+                          (d) => withoutRow(d, row.id),
+                        )
+                      }
+                      className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-destructive"
+                      aria-label="Hapus baris"
+                      title="Hapus baris"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </td>
                 {db.properties.map((p) => (
                   <td
@@ -335,7 +361,12 @@ export function TableView({
                     <CellEditor
                       property={p}
                       value={cellOf(row.id, p.id)}
-                      onCommit={(value) => run(() => setCell(row.id, p.id, value))}
+                      onCommit={(value) =>
+                        run(
+                          () => setCell(row.id, p.id, value),
+                          (d) => withCell(d, row.id, p.id, value),
+                        )
+                      }
                     />
                   </td>
                 ))}

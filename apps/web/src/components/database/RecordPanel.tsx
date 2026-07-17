@@ -6,7 +6,7 @@ import { addProperty, deleteRow, setCell, updateRow } from "@/lib/database.api";
 import { CellEditor } from "./CellEditor";
 import { RecordAttachments } from "./RecordAttachments";
 import { RecordNotes } from "./RecordNotes";
-import { buildCellLookup, titleProperty } from "./database-shared";
+import { buildCellLookup, titleProperty, withCell, withoutRow, type RunFn } from "./database-shared";
 
 /**
  * Panel detail record (peek ala Notion): geser dari kanan, edit semua properti
@@ -21,7 +21,7 @@ export function RecordPanel({
 }: {
   db: Database;
   rowId: string;
-  run: (thunk: () => Promise<Database>) => void;
+  run: RunFn;
   onClose: () => void;
 }) {
   useEffect(() => {
@@ -100,7 +100,12 @@ export function RecordPanel({
                   <CellEditor
                     property={p}
                     value={cellOf(rowId, p.id)}
-                    onCommit={(value) => run(() => setCell(rowId, p.id, value))}
+                    onCommit={(value) =>
+                      run(
+                        () => setCell(rowId, p.id, value),
+                        (d) => withCell(d, rowId, p.id, value),
+                      )
+                    }
                   />
                 </div>
               </div>
@@ -128,7 +133,10 @@ export function RecordPanel({
             <button
               type="button"
               onClick={() => {
-                run(() => deleteRow(rowId));
+                run(
+                  () => deleteRow(rowId),
+                  (d) => withoutRow(d, rowId),
+                );
                 onClose();
               }}
               className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-destructive hover:bg-secondary"

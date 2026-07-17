@@ -15,7 +15,7 @@ import { groupRowsByOption } from "@notion/shared";
 import { Plus } from "lucide-react";
 import { useRef, useState } from "react";
 import { addRow, deleteRow, setCell } from "@/lib/database.api";
-import { RecordCard, optionBadgeClass } from "./database-shared";
+import { RecordCard, optionBadgeClass, withCell, withoutRow, type RunFn } from "./database-shared";
 
 const NULL_COL = "__none__";
 
@@ -103,7 +103,7 @@ export function BoardView({
   onOpenRow,
 }: {
   db: Database;
-  run: (thunk: () => Promise<Database>) => void;
+  run: RunFn;
   groupByProperty: DatabaseProperty | null;
   cellOf: (rowId: string, propId: string) => unknown;
   onOpenRow: (rowId: string) => void;
@@ -154,7 +154,11 @@ export function BoardView({
     const current = cellOf(rowId, groupById);
     const currentStr = typeof current === "string" ? current : "";
     if (currentStr === targetOption) return;
-    run(() => setCell(rowId, groupById, targetOption));
+    // Optimistic: kartu langsung pindah kolom tanpa menunggu XHR.
+    run(
+      () => setCell(rowId, groupById, targetOption),
+      (d) => withCell(d, rowId, groupById, targetOption || null),
+    );
   }
 
   function openIfClick(rowId: string) {
@@ -197,7 +201,12 @@ export function BoardView({
                     db={db}
                     rowId={rowId}
                     cellOf={cellOf}
-                    onDelete={() => run(() => deleteRow(rowId))}
+                    onDelete={() =>
+                      run(
+                        () => deleteRow(rowId),
+                        (d) => withoutRow(d, rowId),
+                      )
+                    }
                   />
                 </DraggableCard>
               ))}
