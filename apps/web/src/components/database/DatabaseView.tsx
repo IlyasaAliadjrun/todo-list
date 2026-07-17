@@ -3,7 +3,8 @@ import type { Database, DatabaseProperty, DatabaseViewType } from "@notion/share
 import { Columns3, Table2 } from "lucide-react";
 import { useState } from "react";
 import { getDatabase, updateDatabaseView } from "@/lib/database.api";
-import { buildCellLookup } from "./database-shared";
+import { listMembers } from "@/lib/workspace.api";
+import { PeopleContext, buildCellLookup } from "./database-shared";
 import { TableView } from "./TableView";
 import { BoardView } from "./BoardView";
 import { RecordPanel } from "./RecordPanel";
@@ -32,6 +33,13 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
     queryFn: () => getDatabase(databaseId),
   });
 
+  // Anggota workspace untuk properti PERSON (di-share lewat context).
+  const { data: members = [] } = useQuery({
+    queryKey: ["members", db?.workspaceId],
+    queryFn: () => listMembers(db!.workspaceId),
+    enabled: !!db?.workspaceId,
+  });
+
   const mutation = useMutation({
     mutationFn: (thunk: () => Promise<Database>) => thunk(),
     onSuccess: (data) => qc.setQueryData(["database", databaseId], data),
@@ -54,6 +62,7 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
   const activeView: DatabaseViewType = db.viewType === "BOARD" ? "BOARD" : "TABLE";
 
   return (
+    <PeopleContext.Provider value={members}>
     <div className="mb-2 rounded-lg border bg-card" contentEditable={false}>
       <div className="flex flex-wrap items-center gap-2 border-b p-2">
         <span className="mr-1 truncate text-sm font-semibold">{db.title}</span>
@@ -117,5 +126,6 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
         <RecordPanel db={db} rowId={openRowId} run={run} onClose={() => setOpenRowId(null)} />
       )}
     </div>
+    </PeopleContext.Provider>
   );
 }

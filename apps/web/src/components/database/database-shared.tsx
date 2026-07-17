@@ -1,4 +1,5 @@
-import type { Database, DatabaseProperty, PropertyType } from "@notion/shared";
+import type { Database, DatabaseProperty, PropertyType, WorkspaceMember } from "@notion/shared";
+import { createContext, useContext } from "react";
 
 export const TYPE_LABELS: Record<PropertyType, string> = {
   TEXT: "Teks",
@@ -8,7 +9,73 @@ export const TYPE_LABELS: Record<PropertyType, string> = {
   CHECKBOX: "Checkbox",
   DATE: "Tanggal",
   URL: "URL",
+  PERSON: "Orang",
 };
+
+/** Anggota workspace database aktif — disediakan DatabaseView, dipakai properti PERSON. */
+export const PeopleContext = createContext<WorkspaceMember[]>([]);
+export const usePeople = (): WorkspaceMember[] => useContext(PeopleContext);
+
+export function personLabel(m: WorkspaceMember): string {
+  return m.name?.trim() || m.email;
+}
+
+function initialsOf(m: WorkspaceMember): string {
+  const s = personLabel(m);
+  const parts = s.split(/[\s@.]+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || s.slice(0, 2).toUpperCase();
+}
+
+/** Warna avatar deterministik dari userId. */
+const AVATAR_BG = [
+  "bg-rose-500",
+  "bg-violet-500",
+  "bg-cyan-600",
+  "bg-emerald-600",
+  "bg-amber-600",
+  "bg-blue-600",
+];
+function avatarColor(userId: string): string {
+  let h = 0;
+  for (const ch of userId) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return AVATAR_BG[h % AVATAR_BG.length];
+}
+
+export function PersonAvatar({ member, size = 16 }: { member: WorkspaceMember; size?: number }) {
+  return (
+    <span
+      style={{ width: size, height: size, fontSize: Math.max(8, size * 0.45) }}
+      className={`flex shrink-0 items-center justify-center rounded-full font-semibold text-white ${avatarColor(member.userId)}`}
+      title={personLabel(member)}
+      aria-hidden
+    >
+      {initialsOf(member)}
+    </span>
+  );
+}
+
+/** Chip daftar orang (avatar + nama) dari array userId. */
+export function PersonChips({ userIds }: { userIds: string[] }) {
+  const people = usePeople();
+  if (userIds.length === 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-1">
+      {userIds.map((id) => {
+        const m = people.find((p) => p.userId === id);
+        if (!m) return null;
+        return (
+          <span
+            key={id}
+            className="inline-flex items-center gap-1 rounded bg-secondary px-1 py-0.5 text-xs text-secondary-foreground"
+          >
+            <PersonAvatar member={m} />
+            <span className="max-w-[8rem] truncate">{personLabel(m)}</span>
+          </span>
+        );
+      })}
+    </div>
+  );
+}
 
 /** Lookup nilai sel O(1). */
 export function buildCellLookup(db: Database): (rowId: string, propId: string) => unknown {
@@ -181,6 +248,18 @@ export function RecordCard({
           <OptionBadges property={p} value={cellOf(rowId, p.id)} />
         </div>
       ))}
+      {db.properties
+        .filter((p) => p.type === "PERSON")
+        .map((p) => {
+          const v = cellOf(rowId, p.id);
+          const ids = Array.isArray(v) ? (v as string[]) : [];
+          if (ids.length === 0) return null;
+          return (
+            <div key={p.id} className="mt-1">
+              <PersonChips userIds={ids} />
+            </div>
+          );
+        })}
       {scalarProps.map((p) => {
         const text = displayText(p, cellOf(rowId, p.id));
         if (!text) return null;

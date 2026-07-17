@@ -8,6 +8,7 @@ export const PropertyTypeSchema = z.enum([
   "CHECKBOX",
   "DATE",
   "URL",
+  "PERSON",
 ]);
 export type PropertyType = z.infer<typeof PropertyTypeSchema>;
 
@@ -162,6 +163,13 @@ export function normalizeCellValue(
         if (!options.some((o) => o.id === id)) throw new Error("Opsi tidak dikenal");
       }
       return ids;
+    }
+    // PERSON: array userId. Keanggotaan workspace divalidasi di server (tak diketahui di sini).
+    case "PERSON": {
+      if (raw == null || raw === "") return [];
+      const arr = Array.isArray(raw) ? raw : [raw];
+      const ids = arr.map(String).filter((s) => s.length > 0);
+      return [...new Set(ids)];
     }
     default:
       return null;

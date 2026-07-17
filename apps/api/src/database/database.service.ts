@@ -386,6 +386,24 @@ export class DatabaseService {
       throw new BadRequestException(err instanceof Error ? err.message : "Nilai tidak valid");
     }
 
+    // PERSON: pastikan setiap userId benar-benar anggota workspace database ini.
+    if (prop.type === "PERSON") {
+      const ids = value as string[];
+      if (ids.length > 0) {
+        const db = await this.prisma.database.findUniqueOrThrow({
+          where: { id: row.databaseId },
+          select: { workspaceId: true },
+        });
+        const members = await this.prisma.workspaceMember.findMany({
+          where: { workspaceId: db.workspaceId, userId: { in: ids } },
+          select: { userId: true },
+        });
+        if (members.length !== ids.length) {
+          throw new BadRequestException("Ada user yang bukan anggota workspace ini");
+        }
+      }
+    }
+
     await this.prisma.cellValue.upsert({
       where: { rowId_propertyId: { rowId, propertyId } },
       create: { rowId, propertyId, value: toJson(value) },

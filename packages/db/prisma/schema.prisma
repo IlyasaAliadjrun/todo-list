@@ -30,6 +30,8 @@ enum PropertyType {
   CHECKBOX
   DATE
   URL
+  /// Daftar anggota workspace (nilai sel = array userId).
+  PERSON
 }
 
 enum DatabaseViewType {
