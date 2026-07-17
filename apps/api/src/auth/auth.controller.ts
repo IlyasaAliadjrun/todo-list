@@ -12,18 +12,23 @@ import {
 } from "@nestjs/common";
 import {
   ChangePasswordInputSchema,
+  ForgotPasswordInputSchema,
   LoginInputSchema,
   RegisterInputSchema,
+  ResetPasswordInputSchema,
   UpdateProfileInputSchema,
   type AuthResponse,
   type AuthUser,
   type ChangePasswordInput,
+  type ForgotPasswordInput,
+  type ResetPasswordInput,
   type UpdateProfileInput,
 } from "@notion/shared";
 import type { Request, Response } from "express";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
 import { REFRESH_COOKIE, type AuthenticatedUser } from "./auth.constants";
 import { AuthService, type AuthResult } from "./auth.service";
+import { PasswordResetService } from "./password-reset.service";
 import { CurrentUser } from "./current-user.decorator";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { TokenService } from "./token.service";
@@ -35,6 +40,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly tokens: TokenService,
+    private readonly reset: PasswordResetService,
   ) {}
 
   private meta(req: Request): { userAgent?: string; ip?: string } {
@@ -85,6 +91,27 @@ export class AuthController {
   ): Promise<void> {
     await this.auth.logout(req.cookies?.[REFRESH_COOKIE]);
     this.tokens.clearRefreshCookie(res);
+  }
+
+  /**
+   * Minta link reset. SELALU 204 apa pun hasilnya — respons tak boleh
+   * membocorkan apakah email terdaftar (user enumeration).
+   */
+  @Post("forgot-password")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async forgotPassword(
+    @Body(new ZodValidationPipe(ForgotPasswordInputSchema)) dto: ForgotPasswordInput,
+  ): Promise<void> {
+    await this.reset.request(dto.email);
+  }
+
+  /** Tukar token dari email dengan password baru. Semua sesi lama dicabut. */
+  @Post("reset-password")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async resetPassword(
+    @Body(new ZodValidationPipe(ResetPasswordInputSchema)) dto: ResetPasswordInput,
+  ): Promise<void> {
+    await this.reset.reset(dto.token, dto.newPassword);
   }
 
   @Get("me")

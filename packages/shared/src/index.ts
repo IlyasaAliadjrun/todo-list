@@ -20,6 +20,8 @@ export {
   AuthResponseSchema,
   UpdateProfileInputSchema,
   ChangePasswordInputSchema,
+  ForgotPasswordInputSchema,
+  ResetPasswordInputSchema,
 } from "./auth/auth";
 export type {
   RegisterInput,
@@ -28,6 +30,8 @@ export type {
   AuthResponse,
   UpdateProfileInput,
   ChangePasswordInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
 } from "./auth/auth";
 
 export {

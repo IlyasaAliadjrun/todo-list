@@ -64,6 +64,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   sessions        Session[]
+  passwordResets  PasswordResetToken[]
   memberships     WorkspaceMember[]
   sentInvitations WorkspaceInvitation[] @relation("InvitedBy")
   createdPages    Page[]               @relation("PageAuthor")
@@ -72,6 +73,21 @@ model User {
 
 /// Refresh-token session. Token disimpan HANYA sebagai hash; rotasi menandai
 /// revokedAt dan menautkan replacedById ke sesi penggantinya.
+/// Token "lupa password" sekali pakai. Token mentah HANYA dikirim lewat email;
+/// DB menyimpan hash-nya (pola sama dengan refresh token, lihat ADR 0003).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
 model Session {
   id           String    @id @default(cuid())
   userId       String

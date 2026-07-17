@@ -9,9 +9,11 @@ import { AppLayout } from "@/routes/AppLayout";
 import { HomePage } from "@/routes/HomePage";
 import { InvitePage } from "@/routes/InvitePage";
 import { LoginPage } from "@/routes/LoginPage";
+import { ForgotPasswordPage } from "@/routes/ForgotPasswordPage";
 import { PageDetail } from "@/routes/PageDetail";
 import { ProfilePage } from "@/routes/ProfilePage";
 import { RegisterPage } from "@/routes/RegisterPage";
+import { ResetPasswordPage } from "@/routes/ResetPasswordPage";
 import { TrashPage } from "@/routes/TrashPage";
 import { WorkspaceSettings } from "@/routes/WorkspaceSettings";
 import { useAuthStore } from "@/stores/auth.store";
@@ -34,6 +36,19 @@ const registerRoute = createRoute({
   beforeLoad: () => {
     if (useAuthStore.getState().status === "authed") throw redirect({ to: "/" });
   },
+});
+
+// Publik: alur lupa/reset password (tanpa auth).
+const forgotPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/forgot-password",
+  component: ForgotPasswordPage,
+});
+
+const resetPasswordRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/reset-password",
+  component: ResetPasswordPage,
 });
 
 // Publik: menangani link undangan email (auth ditangani di dalam komponen).
@@ -87,6 +102,8 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   inviteRoute,
+  forgotPasswordRoute,
+  resetPasswordRoute,
   appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute, settingsRoute, profileRoute]),
 ]);
 

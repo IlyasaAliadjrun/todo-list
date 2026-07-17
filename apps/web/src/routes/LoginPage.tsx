@@ -71,6 +71,12 @@ export function LoginPage() {
           {loading ? "Memproses…" : "Masuk"}
         </Button>
 
+        <p className="text-center text-sm">
+          <Link to="/forgot-password" className="text-muted-foreground underline">
+            Lupa password?
+          </Link>
+        </p>
+
         <p className="text-center text-sm text-muted-foreground">
           Belum punya akun?{" "}
           <Link to="/register" className="font-medium text-foreground underline">

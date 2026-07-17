@@ -4,8 +4,10 @@ import {
   type AuthResponse,
   type AuthUser,
   type ChangePasswordInput,
+  type ForgotPasswordInput,
   type LoginInput,
   type RegisterInput,
+  type ResetPasswordInput,
   type UpdateProfileInput,
 } from "@notion/shared";
 import { apiFetch } from "@/lib/http";
@@ -44,6 +46,16 @@ export async function logout(): Promise<void> {
 
 export function fetchMe(): Promise<AuthUser> {
   return apiFetch("/auth/me", {}, AuthUserSchema);
+}
+
+/** Minta link reset. Server selalu 204 (tak membocorkan apakah email terdaftar). */
+export function forgotPassword(input: ForgotPasswordInput): Promise<void> {
+  return apiFetch("/auth/forgot-password", { method: "POST", body: JSON.stringify(input) });
+}
+
+/** Tukar token dari email dengan password baru. */
+export function resetPassword(input: ResetPasswordInput): Promise<void> {
+  return apiFetch("/auth/reset-password", { method: "POST", body: JSON.stringify(input) });
 }
 
 export async function updateProfile(input: UpdateProfileInput): Promise<AuthUser> {

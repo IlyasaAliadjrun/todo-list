@@ -43,6 +43,17 @@ export const ChangePasswordInputSchema = z.object({
 });
 export type ChangePasswordInput = z.infer<typeof ChangePasswordInputSchema>;
 
+/** Minta link reset password ke email. */
+export const ForgotPasswordInputSchema = z.object({ email: emailSchema });
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordInputSchema>;
+
+/** Tukar token reset (dari link email) dengan password baru. */
+export const ResetPasswordInputSchema = z.object({
+  token: z.string().min(1, "Token wajib diisi"),
+  newPassword: passwordSchema,
+});
+export type ResetPasswordInput = z.infer<typeof ResetPasswordInputSchema>;
+
 /** Respons login/register/refresh: access token JWT dikirim di body (disimpan di memori). */
 export const AuthResponseSchema = z.object({
   user: AuthUserSchema,
