@@ -1,6 +1,6 @@
 import type { DatabaseProperty, PropertyType } from "@notion/shared";
 import { useEffect, useState } from "react";
-import { FloatingMenu } from "./FloatingMenu";
+import { FloatingMenu } from "@/components/ui/FloatingMenu";
 import { PersonAvatar, optionBadgeClass, personLabel, usePeople } from "./database-shared";
 
 interface Props {

@@ -10,7 +10,7 @@ import {
   updateProperty,
 } from "@/lib/database.api";
 import { CellEditor } from "./CellEditor";
-import { FloatingMenu } from "./FloatingMenu";
+import { FloatingMenu } from "@/components/ui/FloatingMenu";
 import { OPTION_COLORS, TYPE_LABELS, buildCellLookup, displayText, swatchClass } from "./database-shared";
 
 const TYPES = Object.keys(TYPE_LABELS) as PropertyType[];

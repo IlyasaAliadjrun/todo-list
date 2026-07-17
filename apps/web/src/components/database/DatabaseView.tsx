@@ -10,7 +10,7 @@ import {
   updateView,
 } from "@/lib/database.api";
 import { listMembers } from "@/lib/workspace.api";
-import { FloatingMenu } from "./FloatingMenu";
+import { FloatingMenu } from "@/components/ui/FloatingMenu";
 import { PeopleContext, buildCellLookup } from "./database-shared";
 import { TableView } from "./TableView";
 import { BoardView } from "./BoardView";

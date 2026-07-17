@@ -1,40 +1,87 @@
 import { create } from "zustand";
 
-export type Theme = "light" | "dark";
+/** Pilihan tema user. "system" mengikuti preferensi OS. */
+export type ThemePref = "system" | "light" | "dark" | "sepia" | "solarized" | "nord";
+/** Basis terang/gelap hasil resolusi — dipakai komponen yang hanya kenal light/dark (BlockNote). */
+export type BaseTheme = "light" | "dark";
+
+export const THEME_PREFS: ThemePref[] = ["system", "light", "dark", "sepia", "solarized", "nord"];
+export const THEME_LABELS: Record<ThemePref, string> = {
+  system: "Sistem",
+  light: "Terang",
+  dark: "Gelap",
+  sepia: "Sepia",
+  solarized: "Solarized",
+  nord: "Nord",
+};
+
+/** Tema yang basisnya gelap (butuh class .dark agar varian `dark:` Tailwind aktif). */
+const DARK_BASED = new Set<string>(["dark", "nord"]);
 
 const STORAGE_KEY = "theme";
 
-/** Tema awal: dari localStorage bila ada, kalau tidak ikuti preferensi sistem. */
-function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "light";
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+function prefersDark(): boolean {
+  return typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
 }
 
-/** Terapkan tema dengan menamb/menghapus class `dark` di <html> (Tailwind darkMode: class). */
-function applyTheme(theme: Theme): void {
-  if (typeof document === "undefined") return;
-  document.documentElement.classList.toggle("dark", theme === "dark");
+function isPref(v: unknown): v is ThemePref {
+  return typeof v === "string" && (THEME_PREFS as string[]).includes(v);
+}
+
+function getInitialPref(): ThemePref {
+  if (typeof window === "undefined") return "system";
+  const stored = window.localStorage.getItem(STORAGE_KEY);
+  return isPref(stored) ? stored : "system";
+}
+
+/** Tema efektif (pref "system" → light/dark sesuai OS). */
+function resolve(pref: ThemePref): Exclude<ThemePref, "system"> {
+  if (pref !== "system") return pref;
+  return prefersDark() ? "dark" : "light";
+}
+
+function baseOf(pref: ThemePref): BaseTheme {
+  return DARK_BASED.has(resolve(pref)) ? "dark" : "light";
+}
+
+/** Terapkan: class `dark` (Tailwind darkMode: class) + atribut data-theme (palet). */
+function applyTheme(pref: ThemePref): BaseTheme {
+  const base = baseOf(pref);
+  if (typeof document !== "undefined") {
+    document.documentElement.classList.toggle("dark", base === "dark");
+    document.documentElement.setAttribute("data-theme", resolve(pref));
+  }
+  return base;
 }
 
 interface ThemeState {
-  theme: Theme;
+  /** Pilihan user (termasuk "system"). */
+  pref: ThemePref;
+  /** Basis light/dark hasil resolusi — untuk BlockNote dkk. */
+  theme: BaseTheme;
+  setTheme: (pref: ThemePref) => void;
   toggle: () => void;
-  setTheme: (theme: Theme) => void;
 }
 
-export const useThemeStore = create<ThemeState>((set, get) => ({
-  // Terapkan tema langsung saat store dibuat (import awal) untuk hindari flash.
-  theme: (() => {
-    const initial = getInitialTheme();
-    applyTheme(initial);
-    return initial;
-  })(),
-  setTheme: (theme) => {
-    applyTheme(theme);
-    if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, theme);
-    set({ theme });
-  },
-  toggle: () => get().setTheme(get().theme === "dark" ? "light" : "dark"),
-}));
+export const useThemeStore = create<ThemeState>((set, get) => {
+  const initial = getInitialPref();
+  const base = applyTheme(initial); // terapkan saat import agar tak ada flash
+
+  // Ikuti perubahan OS selama pref masih "system".
+  if (typeof window !== "undefined") {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (get().pref === "system") set({ theme: applyTheme("system") });
+    });
+  }
+
+  return {
+    pref: initial,
+    theme: base,
+    setTheme: (pref) => {
+      const next = applyTheme(pref);
+      if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, pref);
+      set({ pref, theme: next });
+    },
+    toggle: () => get().setTheme(get().theme === "dark" ? "light" : "dark"),
+  };
+});

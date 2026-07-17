@@ -53,6 +53,68 @@
   }
 }
 
+/* Tema tambahan. Dipilih lewat atribut [data-theme] di <html> (lihat theme.store).
+   Ditempatkan SETELAH .dark agar menang pada spesifisitas yang sama.
+   Tema berbasis gelap (nord) tetap memakai class .dark supaya varian `dark:` jalan. */
+@layer base {
+  /* Sepia — terang, hangat */
+  [data-theme="sepia"] {
+    --background: 40 38% 95%;
+    --foreground: 30 25% 18%;
+    --card: 40 38% 97%;
+    --card-foreground: 30 25% 18%;
+    --primary: 25 40% 25%;
+    --primary-foreground: 40 38% 97%;
+    --secondary: 38 30% 88%;
+    --secondary-foreground: 30 25% 20%;
+    --muted: 38 30% 90%;
+    --muted-foreground: 32 15% 40%;
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 40 38% 97%;
+    --border: 38 25% 82%;
+    --input: 38 25% 82%;
+    --ring: 25 40% 35%;
+  }
+
+  /* Solarized Light — terang, kontras rendah */
+  [data-theme="solarized"] {
+    --background: 44 87% 94%;
+    --foreground: 192 81% 14%;
+    --card: 46 42% 90%;
+    --card-foreground: 192 81% 14%;
+    --primary: 205 69% 39%;
+    --primary-foreground: 44 87% 94%;
+    --secondary: 46 42% 88%;
+    --secondary-foreground: 192 81% 14%;
+    --muted: 46 42% 88%;
+    --muted-foreground: 194 14% 40%;
+    --destructive: 1 71% 52%;
+    --destructive-foreground: 44 87% 94%;
+    --border: 46 30% 80%;
+    --input: 46 30% 80%;
+    --ring: 205 69% 49%;
+  }
+
+  /* Nord — gelap, biru dingin */
+  [data-theme="nord"] {
+    --background: 220 16% 22%;
+    --foreground: 218 27% 92%;
+    --card: 220 16% 26%;
+    --card-foreground: 218 27% 92%;
+    --primary: 213 32% 82%;
+    --primary-foreground: 220 16% 22%;
+    --secondary: 220 17% 32%;
+    --secondary-foreground: 218 27% 92%;
+    --muted: 220 17% 30%;
+    --muted-foreground: 219 14% 75%;
+    --destructive: 354 42% 56%;
+    --destructive-foreground: 218 27% 92%;
+    --border: 220 17% 34%;
+    --input: 220 17% 34%;
+    --ring: 210 34% 63%;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
