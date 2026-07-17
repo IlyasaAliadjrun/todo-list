@@ -1,5 +1,19 @@
 # Setup Development — Ubuntu 20.04 LTS
 
+> ## ⚠️ File ini untuk MESIN DEV, bukan server produksi
+>
+> Untuk deploy ke server, ikuti **`docs/deployment.md`** — jangan file ini. Di server:
+>
+> - **Node/nvm/pnpm (§1) dan Playwright (§5) tidak perlu** — build terjadi di container.
+> - **§3 `docker compose up -d` BERBAHAYA di produksi**: itu stack *dev*, yang mem-publish
+>   postgres:5432, redis:6379, minio:9000/9001 ke host dan punya password fallback default
+>   (`notion_dev_password`, `minioadmin`). Produksi **selalu** `-f docker-compose.prod.yml`.
+> - **§2 memakai kodename `focal` (20.04) yang di-hardcode.** Di Ubuntu lain (22.04/24.04)
+>   itu memasang paket untuk distro yang salah — `deployment.md` memakai deteksi otomatis.
+>
+> Yang perlu dipasang di server hanya Docker + git; lihat "Prasyarat server" di
+> `docs/deployment.md`.
+
 Semua instalasi & runtime ditargetkan ke **Ubuntu 20.04 (Focal)**. Paket bawaan
 distro ini tua, jadi ikuti langkah di bawah (jangan `apt install nodejs`).
 
@@ -33,8 +47,9 @@ sudo apt-get install -y ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
   sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+# Kodename dideteksi dari OS (benar di 20.04 maupun 22.04/24.04) — jangan hardcode.
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-  https://download.docker.com/linux/ubuntu focal stable" | \
+  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
   sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io \

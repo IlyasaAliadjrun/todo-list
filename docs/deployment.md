@@ -19,18 +19,76 @@
 
 ## Prasyarat server
 
-- Ubuntu **24.04 LTS** (20.04 sudah lewat standard support — lihat catatan di bawah).
-- ≤10 user: **2 vCPU / 4 GB RAM / 60 GB SSD** (+swap 2–4 GB bila build di server).
-  10–50 user: **4 vCPU / 8 GB / 100 GB**. RAM ditentukan oleh *build* (Vite+Nest ≈3–4 GB),
-  bukan runtime (idle ≈1–1,5 GB). RAM pas-pasan → build image di CI, server cukup `pull`.
-- Docker Engine + Compose v2 (repo resmi Docker). Node/pnpm tidak perlu di server.
+> `docs/setup-ubuntu.md` adalah panduan **mesin dev**, BUKAN server produksi. Jangan
+> diikuti di server: langkah Node/nvm/pnpm/Playwright tidak diperlukan, dan
+> `docker compose up -d` di sana menyalakan stack **dev** (lihat peringatan di bawah).
+
+### Spesifikasi
+
+- Ubuntu **24.04 LTS** (20.04 sudah lewat standard support — lihat catatan di akhir).
+- ≤10 user: **2 vCPU / 4 GB RAM / 60 GB SSD**. 10–50 user: **4 vCPU / 8 GB / 100 GB**.
+- RAM ditentukan oleh *build* (Vite+Nest ≈3–4 GB), bukan runtime (idle ≈1–1,5 GB).
+  Di 4 GB, siapkan swap sebelum build pertama; atau build di CI dan server cukup `pull`.
 - **DNS**: A record `app.domain.com` dan `storage.domain.com` → IP server, **sebelum**
   stack dinyalakan (Caddy butuh ini untuk validasi ACME).
-- **Firewall**: `ufw allow 22,80,443` saja. Postgres/Redis/MinIO tidak di-publish.
+
+### Yang dipasang di host
+
+Hanya **Docker Engine + Compose v2** dan **git**. Node, pnpm, PostgreSQL, Redis, MinIO,
+Nginx, dan Certbot **tidak perlu** dipasang — semuanya berjalan di container (Nginx ada di
+dalam image `web`; sertifikat diurus Caddy).
+
+```bash
+# git + Docker dari repo resmi (JANGAN `apt install docker.io` — tua, tanpa Compose v2).
+sudo apt-get update && sudo apt-get install -y git ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+  sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+# Kodename dideteksi dari OS — jangan hardcode (mis. `focal` akan salah di 22.04/24.04).
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+  https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update && sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
+  docker-buildx-plugin docker-compose-plugin
+
+sudo usermod -aG docker "$USER"   # WAJIB logout/login — grup baru tak aktif di sesi ini
+docker compose version            # v2: "docker compose", bukan "docker-compose"
+
+# Swap 4 GB — hanya bila RAM 4 GB dan build dilakukan di server.
+sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile
+sudo mkswap /swapfile && sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+```
+
+### Firewall — dan jebakan Docker vs ufw
+
+```bash
+sudo ufw allow 22,80,443/tcp && sudo ufw enable
+```
+
+⚠️ **ufw TIDAK memblokir port yang di-publish container.** Docker menyisipkan aturan
+iptables sendiri (chain `DOCKER-USER`/`DOCKER`) yang dievaluasi **sebelum** ufw, jadi
+`ufw deny 5432` tak berpengaruh pada container yang mem-publish 5432
+([Docker: Packet filtering and firewalls](https://docs.docker.com/engine/network/packet-filtering-firewalls/)).
+Verifikasi di server: `sudo iptables -t nat -L DOCKER -n`. Keamanan di sini datang dari
+**`docker-compose.prod.yml` yang hanya mem-publish 80/443 (service `caddy`)** — bukan dari
+ufw. Karena itu: jangan pernah menambah `ports:` ke postgres/redis/minio di compose prod,
+dan jangan jalankan stack dev di server (lihat bawah).
+
+### ⚠️ Selalu pakai `-f docker-compose.prod.yml`
+
+`docker compose up -d` **tanpa `-f`** memakai `docker-compose.yml` (stack **dev**), yang
+mem-publish **postgres:5432, redis:6379, minio:9000/9001 ke host** dan punya password
+fallback default (`notion_dev_password`, `minioadmin`) bila `.env` tak lengkap. Di server
+produksi itu = database terbuka ke internet dengan password yang ada di repo. ufw tidak
+akan menyelamatkan (lihat di atas).
 
 ## Deploy single-host (VPS)
 
 ```bash
+# 0. Ambil kode (build dijalankan dari source, jadi repo harus ada di server):
+git clone <repo-url> && cd notion-clone
+
 # 1. Siapkan .env produksi (secret KUAT — jangan pakai default dev):
 cp .env.example .env
 #   - NODE_ENV=production
