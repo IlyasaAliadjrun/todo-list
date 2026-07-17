@@ -108,6 +108,15 @@ export class TokenService {
     });
   }
 
+  /** Revoke SEMUA sesi aktif milik user (dipakai saat password berubah/di-reset). */
+  async revokeAllForUser(userId: string): Promise<number> {
+    const res = await this.prisma.session.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+    return res.count;
+  }
+
   private cookieOptions(): CookieOptions {
     return {
       httpOnly: true,

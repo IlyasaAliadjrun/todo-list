@@ -5,6 +5,7 @@ import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { LoginRateLimitService } from "./login-rate-limit.service";
 import { PasswordService } from "./password.service";
+import { SuperAdminService } from "./superadmin.service";
 import { TokenService } from "./token.service";
 
 /**
@@ -15,7 +16,14 @@ import { TokenService } from "./token.service";
 @Module({
   imports: [JwtModule.register({})],
   controllers: [AuthController],
-  providers: [AuthService, PasswordService, TokenService, LoginRateLimitService, JwtAuthGuard],
-  exports: [TokenService, JwtAuthGuard, PasswordService],
+  providers: [
+    AuthService,
+    PasswordService,
+    TokenService,
+    LoginRateLimitService,
+    JwtAuthGuard,
+    SuperAdminService,
+  ],
+  exports: [TokenService, JwtAuthGuard, PasswordService, SuperAdminService],
 })
 export class AuthModule {}

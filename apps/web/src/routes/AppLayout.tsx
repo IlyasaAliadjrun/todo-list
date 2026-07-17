@@ -64,9 +64,14 @@ export function AppLayout() {
             <span className="hidden sm:inline">Cari</span>
             <kbd className="hidden rounded bg-secondary px-1 text-[10px] sm:inline">⌘K</kbd>
           </button>
-          <span className="hidden max-w-[30vw] truncate text-sm text-muted-foreground lg:inline">
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/profile" })}
+            title="Profil saya"
+            className="hidden max-w-[30vw] truncate rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-secondary hover:text-foreground lg:inline"
+          >
             {user?.email}
-          </span>
+          </button>
           <button
             type="button"
             onClick={() => navigate({ to: "/settings" })}

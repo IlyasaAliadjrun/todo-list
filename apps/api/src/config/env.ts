@@ -52,6 +52,9 @@ const EnvSchema = z.object({
   MAIL_FROM: z.string().default("My Notepad <no-reply@localhost>"),
   // URL aplikasi (untuk membentuk link undangan). Default = WEB_ORIGIN.
   APP_URL: z.string().url().optional(),
+  // Superadmin: daftar email dipisah koma. Di-sync ke User.isSuperAdmin saat boot
+  // (satu-satunya jalan jadi superadmin — tak bisa lewat API/UI). Lihat ADR 0011.
+  SUPERADMIN_EMAILS: z.string().default(""),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

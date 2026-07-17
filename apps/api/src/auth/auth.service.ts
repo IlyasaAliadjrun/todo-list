@@ -1,5 +1,16 @@
-import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
-import type { AuthUser, LoginInput, RegisterInput } from "@notion/shared";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from "@nestjs/common";
+import type {
+  AuthUser,
+  ChangePasswordInput,
+  LoginInput,
+  RegisterInput,
+  UpdateProfileInput,
+} from "@notion/shared";
 import type { User } from "@notion/db";
 import { uniqueSlug } from "../common/slug";
 import { PrismaService } from "../prisma/prisma.service";
@@ -30,7 +41,42 @@ export class AuthService {
   ) {}
 
   private toAuthUser(user: User): AuthUser {
-    return { id: user.id, email: user.email, name: user.name };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      isSuperAdmin: user.isSuperAdmin,
+    };
+  }
+
+  /** Ubah profil sendiri (kini: nama). */
+  async updateProfile(userId: string, input: UpdateProfileInput): Promise<AuthUser> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { ...(input.name !== undefined ? { name: input.name?.trim() || null } : {}) },
+    });
+    return this.toAuthUser(user);
+  }
+
+  /**
+   * Ganti password sendiri: verifikasi password lama, lalu cabut SEMUA sesi
+   * (perangkat lain ikut logout) dan terbitkan sesi baru untuk perangkat ini.
+   */
+  async changePassword(
+    userId: string,
+    input: ChangePasswordInput,
+    meta: RequestMeta,
+  ): Promise<AuthResult> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException("User tidak ditemukan");
+
+    const ok = await this.password.verify(user.passwordHash, input.currentPassword);
+    if (!ok) throw new BadRequestException("Password saat ini salah");
+
+    const passwordHash = await this.password.hash(input.newPassword);
+    const updated = await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    await this.tokens.revokeAllForUser(userId);
+    return this.issueFor(updated, meta);
   }
 
   private async issueFor(user: User, meta: RequestMeta): Promise<AuthResult> {

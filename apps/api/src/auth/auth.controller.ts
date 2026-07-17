@@ -4,16 +4,21 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
   UseGuards,
 } from "@nestjs/common";
 import {
+  ChangePasswordInputSchema,
   LoginInputSchema,
   RegisterInputSchema,
+  UpdateProfileInputSchema,
   type AuthResponse,
   type AuthUser,
+  type ChangePasswordInput,
+  type UpdateProfileInput,
 } from "@notion/shared";
 import type { Request, Response } from "express";
 import { ZodValidationPipe } from "../common/pipes/zod-validation.pipe";
@@ -86,5 +91,26 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: AuthenticatedUser): Promise<AuthUser> {
     return this.auth.me(user.id);
+  }
+
+  @Patch("me")
+  @UseGuards(JwtAuthGuard)
+  updateProfile(
+    @Body(new ZodValidationPipe(UpdateProfileInputSchema)) dto: UpdateProfileInput,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<AuthUser> {
+    return this.auth.updateProfile(user.id, dto);
+  }
+
+  /** Ganti password sendiri. Sesi lama dicabut; perangkat ini dapat sesi baru. */
+  @Post("change-password")
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @Body(new ZodValidationPipe(ChangePasswordInputSchema)) dto: ChangePasswordInput,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AuthResponse> {
+    return this.respond(res, await this.auth.changePassword(user.id, dto, this.meta(req)));
   }
 }

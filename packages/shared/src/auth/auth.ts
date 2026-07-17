@@ -25,8 +25,23 @@ export const AuthUserSchema = z.object({
   id: z.string(),
   email: z.string(),
   name: z.string().nullable(),
+  /** true bila user adalah superadmin (dari SUPERADMIN_EMAILS). */
+  isSuperAdmin: z.boolean(),
 });
 export type AuthUser = z.infer<typeof AuthUserSchema>;
+
+/** Ubah profil sendiri. `name` null/"" = kosongkan. */
+export const UpdateProfileInputSchema = z.object({
+  name: z.string().trim().max(80).nullable().optional(),
+});
+export type UpdateProfileInput = z.infer<typeof UpdateProfileInputSchema>;
+
+/** Ganti password sendiri (butuh password lama). */
+export const ChangePasswordInputSchema = z.object({
+  currentPassword: z.string().min(1, "Password saat ini wajib diisi"),
+  newPassword: passwordSchema,
+});
+export type ChangePasswordInput = z.infer<typeof ChangePasswordInputSchema>;
 
 /** Respons login/register/refresh: access token JWT dikirim di body (disimpan di memori). */
 export const AuthResponseSchema = z.object({

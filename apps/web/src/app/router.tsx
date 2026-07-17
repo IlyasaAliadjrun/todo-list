@@ -10,6 +10,7 @@ import { HomePage } from "@/routes/HomePage";
 import { InvitePage } from "@/routes/InvitePage";
 import { LoginPage } from "@/routes/LoginPage";
 import { PageDetail } from "@/routes/PageDetail";
+import { ProfilePage } from "@/routes/ProfilePage";
 import { RegisterPage } from "@/routes/RegisterPage";
 import { TrashPage } from "@/routes/TrashPage";
 import { WorkspaceSettings } from "@/routes/WorkspaceSettings";
@@ -76,11 +77,17 @@ const settingsRoute = createRoute({
   component: WorkspaceSettings,
 });
 
+const profileRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/profile",
+  component: ProfilePage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   registerRoute,
   inviteRoute,
-  appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute, settingsRoute]),
+  appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute, settingsRoute, profileRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });

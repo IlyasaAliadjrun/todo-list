@@ -18,8 +18,17 @@ export {
   LoginInputSchema,
   AuthUserSchema,
   AuthResponseSchema,
+  UpdateProfileInputSchema,
+  ChangePasswordInputSchema,
 } from "./auth/auth";
-export type { RegisterInput, LoginInput, AuthUser, AuthResponse } from "./auth/auth";
+export type {
+  RegisterInput,
+  LoginInput,
+  AuthUser,
+  AuthResponse,
+  UpdateProfileInput,
+  ChangePasswordInput,
+} from "./auth/auth";
 
 export {
   WorkspaceRoleSchema,
