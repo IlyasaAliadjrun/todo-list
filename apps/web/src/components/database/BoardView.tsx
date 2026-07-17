@@ -73,18 +73,20 @@ function Column({
         )}
         <span className="text-xs text-muted-foreground">{count}</span>
       </div>
-      {/* Seluruh area kolom = zona drop (flex-1 + min-h), bukan hanya di atas kartu. */}
+      {/* Tinggi kolom mengikuti jumlah kartu (bukan menyamai kolom tertinggi).
+          Drop tetap bisa di mana saja pada kolom berkat collisionDetection closestCorners. */}
       <div
         ref={setNodeRef}
-        className={`flex min-h-28 flex-1 flex-col gap-2 rounded-md p-1.5 transition-colors ${
+        className={`flex min-h-16 flex-col gap-2 rounded-md p-1.5 transition-colors ${
           isOver ? "bg-secondary ring-2 ring-primary/30" : "bg-muted/40"
         }`}
       >
         {children}
+        {/* Tepat setelah kartu terakhir */}
         <button
           type="button"
           onClick={onAdd}
-          className="mt-auto flex items-center gap-1 rounded px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
+          className="flex items-center gap-1 rounded px-1.5 py-1 text-left text-xs text-muted-foreground hover:bg-secondary hover:text-foreground"
         >
           <Plus className="h-3.5 w-3.5" /> Baru
         </button>
@@ -174,8 +176,9 @@ export function BoardView({
       onDragEnd={onDragEnd}
       onDragCancel={endDrag}
     >
-      {/* Tinggi dibatasi → scrollbar horizontal tetap terlihat; min-h agar kolom tinggi. */}
-      <div className="flex max-h-[70vh] min-h-[18rem] items-stretch gap-3 overflow-auto p-3">
+      {/* items-start: tiap kolom setinggi isinya. Tinggi board dibatasi agar
+          scrollbar horizontal tetap terlihat. */}
+      <div className="flex max-h-[70vh] items-start gap-3 overflow-auto p-3">
         {columns.map((col) => {
           const { text, color } = labelOf(col.optionId);
           const colId = col.optionId ?? NULL_COL;
