@@ -35,6 +35,7 @@ const apiProxy: Record<string, string | { target: string; ws?: boolean }> = Obje
     "/health",
     "/api",
     "/auth",
+    "/admin",
     "/workspaces",
     "/invitations",
     "/pages",

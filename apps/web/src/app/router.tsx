@@ -5,6 +5,7 @@ import {
   Outlet,
   redirect,
 } from "@tanstack/react-router";
+import { AdminPage } from "@/routes/AdminPage";
 import { AppLayout } from "@/routes/AppLayout";
 import { HomePage } from "@/routes/HomePage";
 import { InvitePage } from "@/routes/InvitePage";
@@ -92,6 +93,12 @@ const settingsRoute = createRoute({
   component: WorkspaceSettings,
 });
 
+const adminRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: "/admin",
+  component: AdminPage,
+});
+
 const profileRoute = createRoute({
   getParentRoute: () => appLayoutRoute,
   path: "/profile",
@@ -104,7 +111,7 @@ const routeTree = rootRoute.addChildren([
   inviteRoute,
   forgotPasswordRoute,
   resetPasswordRoute,
-  appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute, settingsRoute, profileRoute]),
+  appLayoutRoute.addChildren([indexRoute, pageRoute, trashRoute, settingsRoute, profileRoute, adminRoute]),
 ]);
 
 export const router = createRouter({ routeTree, defaultPreload: "intent" });

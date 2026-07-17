@@ -5,6 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { randomUUID } from "node:crypto";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { LoggerModule } from "nestjs-pino";
+import { AdminModule } from "./admin/admin.module";
 import { AuthModule } from "./auth/auth.module";
 import { CollabModule } from "./collab/collab.module";
 import { loadEnv } from "./config/env";
@@ -49,6 +50,7 @@ const env = loadEnv();
     RedisModule,
     MailModule,
     AuthModule,
+    AdminModule,
     PermissionModule,
     WorkspaceModule,
     PageModule,

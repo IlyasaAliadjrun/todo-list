@@ -136,6 +136,17 @@ docker compose up -d      # nyalakan postgres, redis, minio
   (portal, tak ter-clip); opsi SELECT punya pemilih warna. Lihat ADR 0010.
   ⚠️ Prefix REST baru wajib ditambah ke `apiProxy` di `apps/web/vite.config.ts`.
 
+- **Fase 10 (Akun, tema & superadmin) — SELESAI.** **Profil** `/profile` (nama, tema,
+  ganti password: verifikasi password lama → cabut semua sesi, perangkat ini dapat sesi
+  baru). **Lupa password**: `PasswordResetToken` (sha256, 1 jam, sekali pakai) +
+  `/forgot-password` & `/reset-password?token=` — `forgot-password` SELALU 204 body kosong
+  (anti user-enumeration) & token tak pernah ke klien (kalau email mati → token di log server).
+  **Superadmin** dari env `SUPERADMIN_EMAILS` saja (di-sync saat boot, tak ada endpoint
+  promote) → panel `/admin`: daftar user, set password, paksa logout, hapus user.
+  **Tema**: Sistem (ikut OS) + Sepia/Solarized/Nord via `data-theme` + `color-scheme`.
+  UI: workspace full-width, sidebar bisa dilipat, `SelectMenu` menggantikan `<select>`
+  native. Lihat ADR 0011.
+
 ## Slash command tersedia (lihat .claude/commands/)
 
 `/start-phase <n>` · `/finish-phase` · `/new-feature <deskripsi>` ·

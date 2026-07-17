@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useParams } from "@tanstack/react-router";
-import { Menu, PanelLeftClose, PanelLeftOpen, Search, Settings } from "lucide-react";
+import { Menu, PanelLeftClose, PanelLeftOpen, Search, Settings, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { CommandPalette } from "@/components/CommandPalette";
 import { PageTree } from "@/components/page/PageTree";
@@ -72,6 +72,17 @@ export function AppLayout() {
           >
             {user?.email}
           </button>
+          {user?.isSuperAdmin && (
+            <button
+              type="button"
+              onClick={() => navigate({ to: "/admin" })}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground"
+              aria-label="Panel superadmin"
+              title="Panel superadmin"
+            >
+              <ShieldCheck className="h-4 w-4" />
+            </button>
+          )}
           <button
             type="button"
             onClick={() => navigate({ to: "/settings" })}

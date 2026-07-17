@@ -167,3 +167,6 @@ export type { SearchResult } from "./search/search";
 
 export { FavoritePageSchema, FavoriteStatusSchema } from "./favorite/favorite";
 export type { FavoritePage, FavoriteStatus } from "./favorite/favorite";
+
+export { AdminUserSchema, AdminSetPasswordInputSchema } from "./admin/admin";
+export type { AdminUser, AdminSetPasswordInput } from "./admin/admin";
