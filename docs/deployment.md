@@ -72,8 +72,9 @@ Rantai proxy ada dua hop (Caddy → Nginx), jadi `main.ts` menyetel
 `app.set("trust proxy", "uniquelocal")` — hanya hop beralamat privat (jaringan Docker) yang
 dipercaya. Tanpa itu `req.ip` = IP container proxy, sehingga rate limit global dan
 rate-limit login (kunci `ip:email`) kolaps jadi satu bucket bersama untuk semua user, dan
-IP sesi tercatat salah. Caddy juga **mengganti** (bukan menambah) `X-Forwarded-For` dengan
-`{remote_host}` agar klien tidak bisa memalsukan IP asal.
+IP sesi tercatat salah. Sisi Caddy aman tanpa konfigurasi tambahan: karena `trusted_proxies`
+tidak diset, Caddy **mengganti** (bukan menambah) `X-Forwarded-For` kiriman klien dengan IP
+asli, sehingga IP asal tidak bisa dipalsukan.
 
 ## Alternatif PaaS / managed
 

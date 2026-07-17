@@ -3,18 +3,16 @@
 #
 # Uji lokal tanpa domain publik: set APP_DOMAIN=http://localhost dan
 # STORAGE_DOMAIN=http://localhost:9000 (skema http:// mematikan ACME).
-
 {
 	email {$ACME_EMAIL}
 }
 
 # SPA + REST + WebSocket /collab → Nginx (apps/web/nginx.conf) → api:3001.
+# X-Forwarded-For tak perlu diatur manual: `trusted_proxies` tidak diset, sehingga Caddy
+# MENGGANTI (bukan menambah) XFF kiriman klien dengan IP asli — klien tak bisa memalsukan
+# IP. API membaca rantai ini untuk rate-limit per-IP; lihat "trust proxy" di main.ts.
 {$APP_DOMAIN} {
-	# Ganti (bukan append) XFF: klien tak bisa memalsukan IP asal lewat header kiriman.
-	# API mem-parsing rantai ini untuk rate-limit per-IP; lihat "trust proxy" di main.ts.
-	reverse_proxy web:80 {
-		header_up X-Forwarded-For {remote_host}
-	}
+	reverse_proxy web:80
 }
 
 # Object storage: presigned PUT & GET gambar langsung dari browser ke MinIO.
@@ -25,7 +23,5 @@
 	request_body {
 		max_size 12MB
 	}
-	reverse_proxy minio:9000 {
-		header_up X-Forwarded-For {remote_host}
-	}
+	reverse_proxy minio:9000
 }
