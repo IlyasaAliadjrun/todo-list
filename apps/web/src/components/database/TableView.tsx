@@ -100,9 +100,12 @@ function PropertyHeader({
               <span className="mb-1 block text-xs text-muted-foreground">Tipe</span>
               <select
                 value={property.type}
-                onChange={(e) =>
-                  run(() => updateProperty(property.id, { type: e.target.value as PropertyType }))
-                }
+                onChange={(e) => {
+                  // Baca nilai SEKARANG: thunk dieksekusi asinkron, dan saat itu React
+                  // sudah me-render ulang select terkontrol ini ke nilai lama.
+                  const type = e.target.value as PropertyType;
+                  run(() => updateProperty(property.id, { type }));
+                }}
                 className="h-8 w-full rounded-md border border-input bg-background px-2"
               >
                 {TYPES.map((t) => (

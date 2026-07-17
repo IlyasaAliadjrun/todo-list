@@ -164,9 +164,11 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
                   Kelompokkan
                   <select
                     value={groupByProperty?.id ?? ""}
-                    onChange={(e) =>
-                      run(() => updateView(view.id, { groupByPropertyId: e.target.value }))
-                    }
+                    onChange={(e) => {
+                      // Nilai dibaca eager (lihat catatan sama di TableView).
+                      const groupByPropertyId = e.target.value;
+                      run(() => updateView(view.id, { groupByPropertyId }));
+                    }}
                     className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground"
                   >
                     {selectProps.map((p) => (
