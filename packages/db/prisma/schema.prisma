@@ -240,6 +240,8 @@ model DatabaseRow {
   databaseId String
   database   Database @relation(fields: [databaseId], references: [id], onDelete: Cascade)
   order      String
+  /// Ikon emoji record (tampil di kartu Board & panel), mis. "🛫".
+  icon       String?
   /// Catatan/isi record (BlockNote JSON) — seperti halaman Notion per baris.
   content    Json?
   /// Lampiran record: array { name, url, size } (lihat RowAttachment di shared).

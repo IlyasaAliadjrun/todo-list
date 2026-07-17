@@ -98,6 +98,7 @@ export {
   UpdatePropertyInputSchema,
   MoveInputSchema,
   UpdateCellInputSchema,
+  UpdateRowInputSchema,
   RowContentSchema,
   normalizeCellValue,
 } from "./database/database";
@@ -118,6 +119,7 @@ export type {
   UpdatePropertyInput,
   MoveInput,
   UpdateCellInput,
+  UpdateRowInput,
   RowContent,
 } from "./database/database";
 

@@ -134,6 +134,7 @@ export function RecordCard({
 }) {
   const title = titleProperty(db);
   const titleText = title ? displayText(title, cellOf(rowId, title.id)) : "";
+  const icon = db.rows.find((r) => r.id === rowId)?.icon ?? null;
   const selectProps = db.properties.filter(
     (p) => p.type === "SELECT" || p.type === "MULTI_SELECT",
   );
@@ -152,6 +153,11 @@ export function RecordCard({
         />
       ) : null}
       <div className="flex items-start justify-between gap-1">
+        {icon ? (
+          <span className="shrink-0 text-base leading-snug" aria-hidden>
+            {icon}
+          </span>
+        ) : null}
         <span className="min-w-0 flex-1 font-semibold leading-snug">
           {titleText || <span className="font-normal text-muted-foreground">Tanpa judul</span>}
         </span>

@@ -8,6 +8,7 @@ import {
   type SelectOption,
   type UpdateDatabaseViewInput,
   type UpdatePropertyInput,
+  type UpdateRowInput,
 } from "@notion/shared";
 import { Prisma } from "@notion/db";
 import { generateKeyBetween } from "fractional-indexing";
@@ -113,7 +114,12 @@ export class DatabaseService {
       datePropertyId: db.datePropertyId,
       coverPropertyId: db.coverPropertyId,
       properties,
-      rows: db.rows.map((r) => ({ id: r.id, databaseId: r.databaseId, order: r.order })),
+      rows: db.rows.map((r) => ({
+        id: r.id,
+        databaseId: r.databaseId,
+        order: r.order,
+        icon: r.icon,
+      })),
       cells,
     };
   }
@@ -294,6 +300,16 @@ export class DatabaseService {
       data: { databaseId, order: generateKeyBetween(last?.order ?? null, null) },
     });
     return this.loadFull(databaseId);
+  }
+
+  /** Ubah atribut record (ikon) — butuh EDIT. */
+  async updateRow(id: string, userId: string, input: UpdateRowInput): Promise<DatabaseDto> {
+    const row = await this.ownedRow(id, userId, "EDIT");
+    await this.prisma.databaseRow.update({
+      where: { id },
+      data: { ...(input.icon !== undefined ? { icon: input.icon || null } : {}) },
+    });
+    return this.loadFull(row.databaseId);
   }
 
   /** Ambil konten/catatan record (≥VIEW). */

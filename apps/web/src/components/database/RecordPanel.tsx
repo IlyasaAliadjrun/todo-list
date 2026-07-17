@@ -2,7 +2,7 @@ import type { Database } from "@notion/shared";
 import { Trash2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { addProperty, deleteRow, setCell } from "@/lib/database.api";
+import { addProperty, deleteRow, setCell, updateRow } from "@/lib/database.api";
 import { CellEditor } from "./CellEditor";
 import { RecordAttachments } from "./RecordAttachments";
 import { RecordNotes } from "./RecordNotes";
@@ -65,13 +65,30 @@ export function RecordPanel({
         </div>
 
         <div className="mx-auto w-full max-w-2xl space-y-4 px-8 py-6">
-          {title && (
-            <TitleInput
-              key={rowId}
-              value={typeof titleVal === "string" ? titleVal : ""}
-              onCommit={(v) => run(() => setCell(rowId, title.id, v))}
+          <div className="flex items-center gap-2">
+            <input
+              key={`icon-${rowId}`}
+              defaultValue={db.rows.find((r) => r.id === rowId)?.icon ?? ""}
+              onBlur={(e) => {
+                const next = e.target.value.trim();
+                if (next !== (db.rows.find((r) => r.id === rowId)?.icon ?? "")) {
+                  run(() => updateRow(rowId, { icon: next || null }));
+                }
+              }}
+              maxLength={4}
+              placeholder="🙂"
+              aria-label="Ikon record (emoji)"
+              title="Ikon record (emoji)"
+              className="h-10 w-10 shrink-0 rounded-md border border-input bg-background text-center text-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
-          )}
+            {title && (
+              <TitleInput
+                key={rowId}
+                value={typeof titleVal === "string" ? titleVal : ""}
+                onCommit={(v) => run(() => setCell(rowId, title.id, v))}
+              />
+            )}
+          </div>
 
           <div className="space-y-0.5">
             {others.map((p) => (

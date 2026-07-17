@@ -6,6 +6,7 @@ import {
   type RowAttachment,
   type UpdateDatabaseViewInput,
   type UpdatePropertyInput,
+  type UpdateRowInput,
 } from "@notion/shared";
 import { apiFetch } from "@/lib/http";
 
@@ -71,6 +72,10 @@ export function addRow(databaseId: string): Promise<Database> {
 
 export function deleteRow(id: string): Promise<Database> {
   return apiFetch(`/rows/${id}`, { method: "DELETE" }, DatabaseSchema);
+}
+
+export function updateRow(id: string, input: UpdateRowInput): Promise<Database> {
+  return apiFetch(`/rows/${id}`, { method: "PATCH", body: JSON.stringify(input) }, DatabaseSchema);
 }
 
 export function setCell(rowId: string, propertyId: string, value: unknown): Promise<Database> {

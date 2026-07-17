@@ -35,8 +35,16 @@ export const DatabaseRowSchema = z.object({
   id: z.string(),
   databaseId: z.string(),
   order: z.string(),
+  /** Ikon emoji record (opsional). */
+  icon: z.string().nullable(),
 });
 export type DatabaseRow = z.infer<typeof DatabaseRowSchema>;
+
+/** Ubah atribut record (kini: ikon). */
+export const UpdateRowInputSchema = z
+  .object({ icon: z.string().trim().max(8).nullable().optional() })
+  .refine((v) => Object.keys(v).length > 0, { message: "Tidak ada perubahan" });
+export type UpdateRowInput = z.infer<typeof UpdateRowInputSchema>;
 
 export const CellValueSchema = z.object({
   rowId: z.string(),
