@@ -16,6 +16,10 @@
 /* Token warna gaya shadcn/ui (slate). Dark mode via class .dark. */
 @layer base {
   :root {
+    /* Beri tahu browser skema warnanya agar kontrol native (panah select, date
+       picker, checkbox, scrollbar) ikut tema — tanpa ini semuanya dirender
+       terang dan "hilang" di tema gelap. */
+    color-scheme: light;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -35,6 +39,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
@@ -59,6 +64,7 @@
 @layer base {
   /* Sepia — terang, hangat */
   [data-theme="sepia"] {
+    color-scheme: light;
     --background: 40 38% 95%;
     --foreground: 30 25% 18%;
     --card: 40 38% 97%;
@@ -78,6 +84,7 @@
 
   /* Solarized Light — terang, kontras rendah */
   [data-theme="solarized"] {
+    color-scheme: light;
     --background: 44 87% 94%;
     --foreground: 192 81% 14%;
     --card: 46 42% 90%;
@@ -97,6 +104,7 @@
 
   /* Nord — gelap, biru dingin */
   [data-theme="nord"] {
+    color-scheme: dark;
     --background: 220 16% 22%;
     --foreground: 218 27% 92%;
     --card: 220 16% 26%;

@@ -1,6 +1,7 @@
 import type { DatabaseProperty, PropertyType } from "@notion/shared";
 import { useEffect, useState } from "react";
 import { FloatingMenu } from "@/components/ui/FloatingMenu";
+import { SelectMenu } from "@/components/ui/SelectMenu";
 import { PersonAvatar, optionBadgeClass, personLabel, usePeople } from "./database-shared";
 
 interface Props {
@@ -173,18 +174,20 @@ export function CellEditor({ property, value, onCommit }: Props) {
       );
     case "SELECT":
       return (
-        <select
+        <SelectMenu
+          ariaLabel="Pilih opsi"
+          width={200}
           value={typeof value === "string" ? value : ""}
-          onChange={(e) => onCommit(e.target.value)}
-          className={baseInput}
-        >
-          <option value="">—</option>
-          {property.options.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.name}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => onCommit(v)}
+          options={[
+            { value: "", label: "Kosongkan" },
+            ...property.options.map((o) => ({
+              value: o.id,
+              label: o.name,
+              badgeClass: optionBadgeClass(o.color),
+            })),
+          ]}
+        />
       );
     case "MULTI_SELECT":
       return (

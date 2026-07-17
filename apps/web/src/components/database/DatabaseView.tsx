@@ -11,6 +11,7 @@ import {
 } from "@/lib/database.api";
 import { listMembers } from "@/lib/workspace.api";
 import { FloatingMenu } from "@/components/ui/FloatingMenu";
+import { SelectMenu } from "@/components/ui/SelectMenu";
 import { PeopleContext, buildCellLookup } from "./database-shared";
 import { TableView } from "./TableView";
 import { BoardView } from "./BoardView";
@@ -160,24 +161,17 @@ export function DatabaseView({ databaseId }: { databaseId: string }) {
               </div>
 
               {activeType === "BOARD" && selectProps.length > 0 && (
-                <label className="flex items-center gap-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   Kelompokkan
-                  <select
+                  <SelectMenu
+                    ariaLabel="Kelompokkan"
+                    width={180}
                     value={groupByProperty?.id ?? ""}
-                    onChange={(e) => {
-                      // Nilai dibaca eager (lihat catatan sama di TableView).
-                      const groupByPropertyId = e.target.value;
-                      run(() => updateView(view.id, { groupByPropertyId }));
-                    }}
-                    className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground"
-                  >
-                    {selectProps.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    onChange={(v) => run(() => updateView(view.id, { groupByPropertyId: v }))}
+                    options={selectProps.map((p) => ({ value: p.id, label: p.name }))}
+                    triggerClassName="flex h-7 min-w-[7rem] items-center justify-between gap-1 rounded-md border border-input bg-background px-2 text-left text-xs text-foreground hover:bg-secondary/60"
+                  />
+                </div>
               )}
 
               <FloatingMenu

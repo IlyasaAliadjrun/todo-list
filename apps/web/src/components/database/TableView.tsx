@@ -11,6 +11,7 @@ import {
 } from "@/lib/database.api";
 import { CellEditor } from "./CellEditor";
 import { FloatingMenu } from "@/components/ui/FloatingMenu";
+import { SelectMenu } from "@/components/ui/SelectMenu";
 import { OPTION_COLORS, TYPE_LABELS, buildCellLookup, displayText, swatchClass } from "./database-shared";
 
 const TYPES = Object.keys(TYPE_LABELS) as PropertyType[];
@@ -96,25 +97,17 @@ function PropertyHeader({
         >
           {() => (
             <div className="space-y-2">
-            <label className="block">
+            <div>
               <span className="mb-1 block text-xs text-muted-foreground">Tipe</span>
-              <select
+              <SelectMenu
+                ariaLabel="Tipe kolom"
+                width={200}
                 value={property.type}
-                onChange={(e) => {
-                  // Baca nilai SEKARANG: thunk dieksekusi asinkron, dan saat itu React
-                  // sudah me-render ulang select terkontrol ini ke nilai lama.
-                  const type = e.target.value as PropertyType;
-                  run(() => updateProperty(property.id, { type }));
-                }}
-                className="h-8 w-full rounded-md border border-input bg-background px-2"
-              >
-                {TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {TYPE_LABELS[t]}
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={(v) => run(() => updateProperty(property.id, { type: v as PropertyType }))}
+                options={TYPES.map((t) => ({ value: t, label: TYPE_LABELS[t] }))}
+                triggerClassName="flex h-8 w-full items-center justify-between gap-1 rounded-md border border-input bg-background px-2 text-left text-sm hover:bg-secondary/60"
+              />
+            </div>
 
             {isSelectType && (
               <div>
