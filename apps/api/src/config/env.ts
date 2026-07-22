@@ -9,6 +9,15 @@ const EnvSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(3001),
   WEB_ORIGIN: z.string().url().default("http://localhost:5173"),
 
+  // Flag Secure pada cookie refresh. Kalau tak diisi → ikut NODE_ENV (production = true).
+  // Set "false" HANYA untuk akses via HTTP polos (mis. deploy sementara tanpa TLS) —
+  // tanpa ini browser tak mengirim cookie Secure lewat HTTP dan login patah. INSECURE:
+  // sesi terkirim plaintext; jangan dipakai dengan data/kredensial sungguhan.
+  COOKIE_SECURE: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true")),
+
   DATABASE_URL: z.string().min(1, "DATABASE_URL wajib diisi"),
 
   REDIS_URL: z.string().min(1).optional(),

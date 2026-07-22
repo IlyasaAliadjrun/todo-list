@@ -121,7 +121,8 @@ export class TokenService {
     return {
       httpOnly: true,
       sameSite: "lax",
-      secure: this.env.NODE_ENV === "production",
+      // COOKIE_SECURE menang bila diset; jika tidak, ikut NODE_ENV (production = Secure).
+      secure: this.env.COOKIE_SECURE ?? this.env.NODE_ENV === "production",
       path: "/",
       maxAge: this.env.JWT_REFRESH_TTL * 1000,
     };
