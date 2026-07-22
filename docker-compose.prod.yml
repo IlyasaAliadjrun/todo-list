@@ -106,18 +106,19 @@ services:
       - api
     # Tidak mem-publish port: satu-satunya jalan masuk adalah `caddy` (TLS).
 
-  # Terminasi TLS + sertifikat otomatis. Satu-satunya service yang terekspos ke internet.
+  # Terminasi TLS (sertifikat sendiri, lihat ./certs). Satu-satunya service terekspos internet.
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
     environment:
       APP_DOMAIN: "${APP_DOMAIN:?domain aplikasi wajib diisi, mis. https://notes.akasha.co.id}"
-      ACME_EMAIL: "${ACME_EMAIL:?email untuk notifikasi Let's Encrypt wajib diisi}"
       # Nama bucket untuk route storage di Caddyfile — samakan dengan S3_BUCKET.
       S3_BUCKET: "${S3_BUCKET:-notion-uploads}"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddydata:/data # sertifikat — JANGAN dihapus, ada rate limit Let's Encrypt.
+      # Sertifikat TLS sendiri: taruh fullchain.pem & privkey.pem di ./certs pada host.
+      - ./certs:/etc/caddy/certs:ro
+      - caddydata:/data
       - caddyconfig:/config
     ports:
       - "80:80"

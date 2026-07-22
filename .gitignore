@@ -24,3 +24,10 @@ test-results/
 # logs & os
 *.log
 .DS_Store
+
+# sertifikat TLS produksi — JANGAN pernah commit private key
+/certs/
+*.pem
+*.key
+*.crt
+*.pfx

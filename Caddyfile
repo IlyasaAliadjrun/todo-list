@@ -1,15 +1,22 @@
-# Caddyfile — terminasi TLS di depan stack produksi (lihat docker-compose.prod.yml).
-# Sertifikat Let's Encrypt otomatis; DNS APP_DOMAIN harus sudah mengarah ke server ini.
+# Caddyfile — reverse proxy TLS di depan stack produksi (lihat docker-compose.prod.yml).
 #
-# SATU domain untuk semuanya: SPA + REST + WebSocket /collab, DAN object storage
-# (di path bucket). Tidak perlu subdomain storage terpisah.
+# TLS memakai sertifikat SENDIRI (bukan Let's Encrypt). Taruh dua file di ./certs/ pada
+# host (ter-mount ke /etc/caddy/certs, lihat compose):
+#   - fullchain.pem : sertifikat leaf + SEMUA intermediate (leaf paling atas). Tanpa
+#                     rantai lengkap, sebagian browser/perangkat menolak.
+#   - privkey.pem   : private key PEM TANPA passphrase (Caddy tak bisa key terenkripsi).
+# Sertifikat harus mencakup nama "notes.akasha.co.id" (atau wildcard *.akasha.co.id).
 #
-# Uji lokal tanpa domain publik: set APP_DOMAIN=http://localhost (skema http:// matikan ACME).
-{
-	email {$ACME_EMAIL}
-}
+# SATU domain untuk semua: SPA + REST + WebSocket /collab, DAN object storage (path bucket).
+#
+# Uji lokal tanpa TLS: set APP_DOMAIN=http://localhost dan hapus baris `tls` di bawah
+# (skema http:// membuat Caddy melayani HTTP polos).
 
 {$APP_DOMAIN} {
+	# Sertifikat sendiri — memberi file eksplisit MEMATIKAN ACME/Let's Encrypt.
+	# Perpanjangan jadi tanggung jawabmu: ganti file lalu `docker compose ... restart caddy`.
+	tls /etc/caddy/certs/fullchain.pem /etc/caddy/certs/privkey.pem
+
 	# Object storage: path bucket MinIO di-proxy langsung ke MinIO agar browser bisa
 	# GET (lihat) & PUT (upload presigned) gambar. Pakai `handle` (BUKAN handle_path)
 	# supaya path penuh /<bucket>/... TIDAK dipangkas — signature SigV4 mencakup path

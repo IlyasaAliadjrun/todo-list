@@ -110,7 +110,21 @@ curl -fsS https://notes.akasha.co.id/health   # → {"status":"ok"}
 
 Refresh-token cookie ber-flag **Secure** saat `NODE_ENV=production` → hanya terkirim lewat
 **HTTPS**. Tanpa TLS user akan ter-logout begitu access token (15 menit) habis. Service
-`caddy` menangani ini otomatis; `web` sengaja tidak mem-publish port apa pun.
+`caddy` menangani TLS; `web` sengaja tidak mem-publish port apa pun.
+
+**Sertifikat: pakai milik sendiri** (bukan Let's Encrypt). Taruh dua file di `./certs/`:
+
+```
+certs/fullchain.pem   # leaf + SEMUA intermediate (leaf paling atas)
+certs/privkey.pem     # private key PEM TANPA passphrase
+```
+
+`Caddyfile` menunjuk kedua file itu via direktif `tls`, yang **mematikan ACME**. Sertifikat
+harus mencakup `notes.akasha.co.id`. Perpanjangan manual: ganti file lalu
+`docker compose -f docker-compose.prod.yml restart caddy`. `./certs/` sudah di-`.gitignore`
+— **jangan pernah commit private key**. Konversi dari `.pfx`:
+`openssl pkcs12 -in cert.pfx -clcerts -nokeys -out certs/fullchain.pem` dan
+`openssl pkcs12 -in cert.pfx -nocerts -nodes -out certs/privkey.pem`.
 
 **Satu domain untuk semuanya** — tak perlu subdomain storage terpisah. Caddy memecah rute
 berdasarkan path (lihat `Caddyfile`):
@@ -123,14 +137,13 @@ notes.akasha.co.id/* (sisanya)       → web:80      (SPA + REST + ws /collab �
 Presigned URL ditandatangani API terhadap `S3_PUBLIC_ENDPOINT` (= domain ini). Route
 storage memakai `handle` (bukan `handle_path`) agar path `/<bucket>/...` tidak dipangkas,
 dan Caddy mempertahankan Host asli — dua hal itu wajib supaya signature SigV4 valid. Nama
-bucket di route mengikuti `S3_BUCKET` (default `notion-uploads`). Volume `caddydata`
-menyimpan sertifikat — jangan dihapus (rate limit Let's Encrypt).
+bucket di route mengikuti `S3_BUCKET` (default `notion-uploads`).
 
 > Alternatif: mau storage di subdomain sendiri (mis. `storage.akasha.co.id`)? Tambah A
 > record ke IP yang sama, set `S3_PUBLIC_ENDPOINT` ke subdomain itu, dan beri Caddy satu
 > site-block `{$S3_PUBLIC_ENDPOINT} { reverse_proxy minio:9000 }`. Tidak wajib.
 
-Uji lokal tanpa domain: `APP_DOMAIN=http://localhost` (skema `http://` mematikan ACME).
+Uji lokal tanpa TLS: `APP_DOMAIN=http://localhost` + hapus baris `tls` di Caddyfile.
 
 ### IP klien di belakang proxy
 
