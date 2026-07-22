@@ -29,8 +29,8 @@
 - ≤10 user: **2 vCPU / 4 GB RAM / 60 GB SSD**. 10–50 user: **4 vCPU / 8 GB / 100 GB**.
 - RAM ditentukan oleh *build* (Vite+Nest ≈3–4 GB), bukan runtime (idle ≈1–1,5 GB).
   Di 4 GB, siapkan swap sebelum build pertama; atau build di CI dan server cukup `pull`.
-- **DNS**: A record `app.domain.com` dan `storage.domain.com` → IP server, **sebelum**
-  stack dinyalakan (Caddy butuh ini untuk validasi ACME).
+- **DNS**: satu A record `notes.akasha.co.id` → IP server, **sebelum** stack dinyalakan
+  (Caddy butuh ini untuk validasi ACME). Storage ikut domain yang sama (path bucket).
 
 ### Yang dipasang di host
 
@@ -94,16 +94,16 @@ cp .env.example .env
 #   - NODE_ENV=production
 #   - JWT_ACCESS_SECRET/JWT_REFRESH_SECRET: openssl rand -hex 32 (harus BERBEDA)
 #   - POSTGRES_PASSWORD, S3_ACCESS_KEY, S3_SECRET_KEY: ganti semua
-#   - APP_DOMAIN=https://app.domain.com  ·  WEB_ORIGIN & APP_URL = sama
-#   - STORAGE_DOMAIN=https://storage.domain.com  ·  S3_PUBLIC_ENDPOINT = sama
-#   - ACME_EMAIL=admin@domain.com
-#   - HOCUSPOCUS_URL=wss://app.domain.com/collab   (wss, bukan ws)
+#   - APP_DOMAIN=https://notes.akasha.co.id
+#     WEB_ORIGIN = APP_URL = S3_PUBLIC_ENDPOINT = sama (SATU domain untuk semua)
+#   - ACME_EMAIL=admin@akasha.co.id
+#   - HOCUSPOCUS_URL=wss://notes.akasha.co.id/collab   (wss, bukan ws)
 
 # 2. Build & jalankan (migrate otomatis jalan sebelum api):
 docker compose -f docker-compose.prod.yml up -d --build
 
 # 3. Cek health (lewat Caddy → nginx → api):
-curl -fsS https://app.domain.com/health   # → {"status":"ok"}
+curl -fsS https://notes.akasha.co.id/health   # → {"status":"ok"}
 ```
 
 ### TLS (WAJIB untuk produksi)
@@ -112,17 +112,25 @@ Refresh-token cookie ber-flag **Secure** saat `NODE_ENV=production` → hanya te
 **HTTPS**. Tanpa TLS user akan ter-logout begitu access token (15 menit) habis. Service
 `caddy` menangani ini otomatis; `web` sengaja tidak mem-publish port apa pun.
 
+**Satu domain untuk semuanya** — tak perlu subdomain storage terpisah. Caddy memecah rute
+berdasarkan path (lihat `Caddyfile`):
+
 ```
-app.domain.com     → web:80      (SPA + proxy REST & ws /collab → api:3001)
-storage.domain.com → minio:9000  (presigned PUT/GET gambar, diakses browser langsung)
+notes.akasha.co.id/notion-uploads/*  → minio:9000  (GET/PUT gambar via presigned URL)
+notes.akasha.co.id/* (sisanya)       → web:80      (SPA + REST + ws /collab → api:3001)
 ```
 
-`storage.domain.com` **bukan opsional** bila upload gambar dipakai: presigned URL
-ditandatangani terhadap host itu, jadi Host header diteruskan apa adanya (default Caddy).
-Volume `caddydata` menyimpan sertifikat — jangan dihapus (rate limit Let's Encrypt).
+Presigned URL ditandatangani API terhadap `S3_PUBLIC_ENDPOINT` (= domain ini). Route
+storage memakai `handle` (bukan `handle_path`) agar path `/<bucket>/...` tidak dipangkas,
+dan Caddy mempertahankan Host asli — dua hal itu wajib supaya signature SigV4 valid. Nama
+bucket di route mengikuti `S3_BUCKET` (default `notion-uploads`). Volume `caddydata`
+menyimpan sertifikat — jangan dihapus (rate limit Let's Encrypt).
 
-Uji lokal tanpa domain: `APP_DOMAIN=http://localhost`, `STORAGE_DOMAIN=http://localhost:9000`
-(skema `http://` mematikan ACME).
+> Alternatif: mau storage di subdomain sendiri (mis. `storage.akasha.co.id`)? Tambah A
+> record ke IP yang sama, set `S3_PUBLIC_ENDPOINT` ke subdomain itu, dan beri Caddy satu
+> site-block `{$S3_PUBLIC_ENDPOINT} { reverse_proxy minio:9000 }`. Tidak wajib.
+
+Uji lokal tanpa domain: `APP_DOMAIN=http://localhost` (skema `http://` mematikan ACME).
 
 ### IP klien di belakang proxy
 

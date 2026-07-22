@@ -1,27 +1,34 @@
 # Caddyfile — terminasi TLS di depan stack produksi (lihat docker-compose.prod.yml).
-# Sertifikat Let's Encrypt otomatis; DNS kedua domain harus sudah mengarah ke server ini.
+# Sertifikat Let's Encrypt otomatis; DNS APP_DOMAIN harus sudah mengarah ke server ini.
 #
-# Uji lokal tanpa domain publik: set APP_DOMAIN=http://localhost dan
-# STORAGE_DOMAIN=http://localhost:9000 (skema http:// mematikan ACME).
+# SATU domain untuk semuanya: SPA + REST + WebSocket /collab, DAN object storage
+# (di path bucket). Tidak perlu subdomain storage terpisah.
+#
+# Uji lokal tanpa domain publik: set APP_DOMAIN=http://localhost (skema http:// matikan ACME).
 {
 	email {$ACME_EMAIL}
 }
 
-# SPA + REST + WebSocket /collab → Nginx (apps/web/nginx.conf) → api:3001.
-# X-Forwarded-For tak perlu diatur manual: `trusted_proxies` tidak diset, sehingga Caddy
-# MENGGANTI (bukan menambah) XFF kiriman klien dengan IP asli — klien tak bisa memalsukan
-# IP. API membaca rantai ini untuk rate-limit per-IP; lihat "trust proxy" di main.ts.
 {$APP_DOMAIN} {
-	reverse_proxy web:80
-}
-
-# Object storage: presigned PUT & GET gambar langsung dari browser ke MinIO.
-# Presigned URL ditandatangani terhadap host ini, jadi Host header diteruskan apa adanya
-# (perilaku default Caddy) — kalau ditimpa, signature MinIO jadi tidak valid.
-{$STORAGE_DOMAIN} {
-	# MAX_UPLOAD_BYTES = 10MB (packages/shared/src/storage/upload.ts) + headroom.
-	request_body {
-		max_size 12MB
+	# Object storage: path bucket MinIO di-proxy langsung ke MinIO agar browser bisa
+	# GET (lihat) & PUT (upload presigned) gambar. Pakai `handle` (BUKAN handle_path)
+	# supaya path penuh /<bucket>/... TIDAK dipangkas — signature SigV4 mencakup path
+	# dan Host, keduanya harus utuh. Caddy mempertahankan Host asli secara default, jadi
+	# signature yang ditandatangani API (terhadap S3_PUBLIC_ENDPOINT = domain ini) tetap valid.
+	# Default bucket "notion-uploads" mengikuti S3_BUCKET (lihat docker-compose.prod.yml).
+	handle /{$S3_BUCKET:notion-uploads}/* {
+		# MAX_UPLOAD_BYTES = 10MB (packages/shared/src/storage/upload.ts) + headroom.
+		request_body {
+			max_size 12MB
+		}
+		reverse_proxy minio:9000
 	}
-	reverse_proxy minio:9000
+
+	# Sisanya → Nginx (apps/web/nginx.conf) → api:3001.
+	# X-Forwarded-For tak perlu diatur manual: `trusted_proxies` tidak diset, sehingga Caddy
+	# MENGGANTI (bukan menambah) XFF kiriman klien dengan IP asli — klien tak bisa memalsukan
+	# IP. API membaca rantai ini untuk rate-limit per-IP; lihat "trust proxy" di main.ts.
+	handle {
+		reverse_proxy web:80
+	}
 }
