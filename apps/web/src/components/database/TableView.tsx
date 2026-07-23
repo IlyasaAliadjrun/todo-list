@@ -59,7 +59,7 @@ function PropertyHeader({
   const isSelectType = property.type === "SELECT" || property.type === "MULTI_SELECT";
 
   return (
-    <th className="border-b border-r p-0 text-left font-medium last:border-r-0">
+    <th className="min-w-[9rem] border-b border-r p-0 text-left font-medium last:border-r-0">
       <div className="flex items-center gap-1 px-2 py-1.5">
         {editingName ? (
           <input
@@ -356,7 +356,7 @@ export function TableView({
                 {db.properties.map((p) => (
                   <td
                     key={p.id}
-                    className="border-b border-r px-2 py-1 align-middle last:border-r-0"
+                    className="min-w-[9rem] border-b border-r px-2 py-1 align-middle last:border-r-0"
                   >
                     <CellEditor
                       property={p}

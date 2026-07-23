@@ -58,7 +58,7 @@ export function PageDetail() {
     // Full-width: workspace mengisi ruang yang tersedia di resolusi apa pun
     // (dan makin lega saat sidebar dilipat). Padding kiri menyediakan ruang untuk
     // menu samping BlockNote (+ / drag) agar tak menabrak sidebar.
-    <div className="w-full space-y-4 pl-8 sm:pl-14">
+    <div className="w-full space-y-4 pl-3 sm:pl-14">
       <div className="sticky top-0 z-20 space-y-2 bg-background pb-2 pt-1">
       <div className="flex items-start justify-between gap-2">
         <input
