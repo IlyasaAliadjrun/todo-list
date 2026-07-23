@@ -15,21 +15,45 @@ const PRESIGN_TTL_SECONDS = 300;
 @Injectable()
 export class StorageService {
   private readonly env: Env = loadEnv();
-  private readonly client: S3Client;
-  /** Endpoint yang diakses browser (untuk presigned & publicUrl). */
-  private readonly publicEndpoint: string;
+  /** Cache S3Client per endpoint (endpoint bergantung host request bila tak di-override). */
+  private readonly clients = new Map<string, S3Client>();
 
-  constructor() {
-    this.publicEndpoint = this.env.S3_PUBLIC_ENDPOINT ?? this.env.S3_ENDPOINT;
-    this.client = new S3Client({
-      endpoint: this.publicEndpoint,
-      region: this.env.S3_REGION,
-      forcePathStyle: this.env.S3_FORCE_PATH_STYLE,
-      credentials: {
-        accessKeyId: this.env.S3_ACCESS_KEY,
-        secretAccessKey: this.env.S3_SECRET_KEY,
-      },
-    });
+  private clientFor(endpoint: string): S3Client {
+    let c = this.clients.get(endpoint);
+    if (!c) {
+      c = new S3Client({
+        endpoint,
+        region: this.env.S3_REGION,
+        forcePathStyle: this.env.S3_FORCE_PATH_STYLE,
+        credentials: {
+          accessKeyId: this.env.S3_ACCESS_KEY,
+          secretAccessKey: this.env.S3_SECRET_KEY,
+        },
+      });
+      this.clients.set(endpoint, c);
+    }
+    return c;
+  }
+
+  /**
+   * Endpoint object storage yang diakses BROWSER.
+   * - Bila `S3_PUBLIC_ENDPOINT` di-set (produksi) → pakai itu (host storage tetap).
+   * - Selain itu (dev/LAN) → turunkan dari host request supaya presigned URL menunjuk
+   *   ke host yang sama dengan yang dibuka browser (mis. 10.101.18.14) di port S3,
+   *   bukan `localhost` yang tak terjangkau dari mesin lain.
+   */
+  private publicEndpoint(reqOrigin?: string): string {
+    if (this.env.S3_PUBLIC_ENDPOINT) return this.env.S3_PUBLIC_ENDPOINT;
+    if (reqOrigin) {
+      try {
+        const req = new URL(reqOrigin);
+        const s3 = new URL(this.env.S3_ENDPOINT);
+        return `${req.protocol}//${req.hostname}:${s3.port || "9000"}`;
+      } catch {
+        /* fallthrough */
+      }
+    }
+    return this.env.S3_ENDPOINT;
   }
 
   private extensionOf(filename: string): string {
@@ -37,7 +61,11 @@ export class StorageService {
     return match ? `.${match[1].toLowerCase()}` : "";
   }
 
-  async presignUpload(input: PresignUploadInput): Promise<PresignUploadResponse> {
+  /** @param reqOrigin origin/host yang dipakai browser (mis. dari header Origin/Host). */
+  async presignUpload(
+    input: PresignUploadInput,
+    reqOrigin?: string,
+  ): Promise<PresignUploadResponse> {
     if (!isAllowedUploadType(input.contentType)) {
       throw new BadRequestException("Tipe file tidak diperbolehkan");
     }
@@ -45,16 +73,19 @@ export class StorageService {
       throw new BadRequestException("Ukuran file melebihi batas 10MB");
     }
 
+    const endpoint = this.publicEndpoint(reqOrigin);
     const key = `uploads/${randomUUID()}${this.extensionOf(input.filename)}`;
     const command = new PutObjectCommand({
       Bucket: this.env.S3_BUCKET,
       Key: key,
       ContentType: input.contentType,
     });
-    const uploadUrl = await getSignedUrl(this.client, command, { expiresIn: PRESIGN_TTL_SECONDS });
+    const uploadUrl = await getSignedUrl(this.clientFor(endpoint), command, {
+      expiresIn: PRESIGN_TTL_SECONDS,
+    });
 
     // Path-style public URL (bucket sudah di-set anonymous download oleh minio-init).
-    const publicUrl = `${this.publicEndpoint.replace(/\/$/, "")}/${this.env.S3_BUCKET}/${key}`;
+    const publicUrl = `${endpoint.replace(/\/$/, "")}/${this.env.S3_BUCKET}/${key}`;
 
     return { uploadUrl, publicUrl, key };
   }
