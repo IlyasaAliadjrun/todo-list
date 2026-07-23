@@ -95,6 +95,15 @@ export function deleteRow(id: string): Promise<Database> {
   return apiFetch(`/rows/${id}`, { method: "DELETE" }, DatabaseSchema);
 }
 
+/** Reorder baris: taruh setelah `afterId` (null = jadi pertama). Fractional index. */
+export function moveRow(id: string, afterId: string | null): Promise<Database> {
+  return apiFetch(
+    `/rows/${id}/move`,
+    { method: "POST", body: JSON.stringify({ afterId }) },
+    DatabaseSchema,
+  );
+}
+
 export function updateRow(id: string, input: UpdateRowInput): Promise<Database> {
   return apiFetch(`/rows/${id}`, { method: "PATCH", body: JSON.stringify(input) }, DatabaseSchema);
 }
